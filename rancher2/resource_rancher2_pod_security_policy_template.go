@@ -1,23 +1,25 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2PodSecurityPolicyTemplate() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2PodSecurityPolicyTemplateCreate,
-		Read:   resourceRancher2PodSecurityPolicyTemplateRead,
-		Update: resourceRancher2PodSecurityPolicyTemplateUpdate,
-		Delete: resourceRancher2PodSecurityPolicyTemplateDelete,
+		CreateContext: resourceRancher2PodSecurityPolicyTemplateCreate,
+		ReadContext:   resourceRancher2PodSecurityPolicyTemplateRead,
+		UpdateContext: resourceRancher2PodSecurityPolicyTemplateUpdate,
+		DeleteContext: resourceRancher2PodSecurityPolicyTemplateDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2PodSecurityPolicyTemplateImport,
+			StateContext: resourceRancher2PodSecurityPolicyTemplateImport,
 		},
 
 		Schema: podSecurityPolicyTemplateFields(),
@@ -29,7 +31,7 @@ func resourceRancher2PodSecurityPolicyTemplate() *schema.Resource {
 	}
 }
 
-func resourceRancher2PodSecurityPolicyTemplateCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2PodSecurityPolicyTemplateCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	podSecurityPolicyTemplate := expandPodSecurityPolicyTemplate(d)
 
 	log.Printf("[INFO] Creating PodSecurityPolicyTemplate %s", podSecurityPolicyTemplate.Name)
@@ -46,10 +48,10 @@ func resourceRancher2PodSecurityPolicyTemplateCreate(d *schema.ResourceData, met
 
 	d.SetId(newPodSecurityPolicyTemplate.ID)
 
-	return resourceRancher2PodSecurityPolicyTemplateRead(d, meta)
+	return resourceRancher2PodSecurityPolicyTemplateRead(ctx, d, meta)
 }
 
-func resourceRancher2PodSecurityPolicyTemplateRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2PodSecurityPolicyTemplateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing PodSecurityPolicyTemplate with ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -69,7 +71,7 @@ func resourceRancher2PodSecurityPolicyTemplateRead(d *schema.ResourceData, meta 
 	return flattenPodSecurityPolicyTemplate(d, pspt)
 }
 
-func resourceRancher2PodSecurityPolicyTemplateUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2PodSecurityPolicyTemplateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating PodSecurityPolicyTemplate with ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -88,10 +90,10 @@ func resourceRancher2PodSecurityPolicyTemplateUpdate(d *schema.ResourceData, met
 		return err
 	}
 
-	return resourceRancher2PodSecurityPolicyTemplateRead(d, meta)
+	return resourceRancher2PodSecurityPolicyTemplateRead(ctx, d, meta)
 }
 
-func resourceRancher2PodSecurityPolicyTemplateDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2PodSecurityPolicyTemplateDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	id := d.Id()
 	log.Printf("[INFO] Deleting PodSecurityPolicyTemplate with ID %s", id)
 	client, err := meta.(*Config).ManagementClient()
@@ -123,7 +125,7 @@ func resourceRancher2PodSecurityPolicyTemplateDelete(d *schema.ResourceData, met
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for PodSecurityPolicyTemplate (%s) to be removed: %s", id, waitErr)

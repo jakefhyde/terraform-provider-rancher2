@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const (
@@ -83,7 +83,7 @@ func TestAccRancher2Registry_basic_Project(t *testing.T) {
 	testAccRancher2RegistryUpdateConfig = testAccCheckRancher2ClusterSyncTestacc + testAccRancher2RegistryUpdate
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2RegistryDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -121,7 +121,7 @@ func TestAccRancher2Registry_disappears_Project(t *testing.T) {
 	var reg interface{}
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2RegistryDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -143,7 +143,7 @@ func TestAccRancher2Registry_basic_Namespaced(t *testing.T) {
 	testAccRancher2RegistryNsUpdateConfig = testAccCheckRancher2ClusterSyncTestacc + testAccCheckRancher2NamespaceTestacc + testAccRancher2RegistryNsUpdate
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2RegistryDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -181,7 +181,7 @@ func TestAccRancher2Registry_disappears_Namespaced(t *testing.T) {
 	var reg interface{}
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2RegistryDestroy,
 		Steps: []resource.TestStep{
 			{

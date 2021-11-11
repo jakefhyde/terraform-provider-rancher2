@@ -1,23 +1,25 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2ClusterLogging() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2ClusterLoggingCreate,
-		Read:   resourceRancher2ClusterLoggingRead,
-		Update: resourceRancher2ClusterLoggingUpdate,
-		Delete: resourceRancher2ClusterLoggingDelete,
+		CreateContext: resourceRancher2ClusterLoggingCreate,
+		ReadContext:   resourceRancher2ClusterLoggingRead,
+		UpdateContext: resourceRancher2ClusterLoggingUpdate,
+		DeleteContext: resourceRancher2ClusterLoggingDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2ClusterLoggingImport,
+			StateContext: resourceRancher2ClusterLoggingImport,
 		},
 
 		Schema: clusterLoggingFields(),
@@ -29,7 +31,7 @@ func resourceRancher2ClusterLogging() *schema.Resource {
 	}
 }
 
-func resourceRancher2ClusterLoggingCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterLoggingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterLogging, err := expandClusterLogging(d)
 	if err != nil {
 		return err
@@ -62,16 +64,16 @@ func resourceRancher2ClusterLoggingCreate(d *schema.ResourceData, meta interface
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for cluster logging (%s) to be created: %s", newClusterLogging.ID, waitErr)
 	}
 
-	return resourceRancher2ClusterLoggingRead(d, meta)
+	return resourceRancher2ClusterLoggingRead(ctx, d, meta)
 }
 
-func resourceRancher2ClusterLoggingRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterLoggingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Cluster Logging ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -91,7 +93,7 @@ func resourceRancher2ClusterLoggingRead(d *schema.ResourceData, meta interface{}
 	return flattenClusterLogging(d, clusterLogging)
 }
 
-func resourceRancher2ClusterLoggingUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterLoggingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Cluster Logging ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -165,16 +167,16 @@ func resourceRancher2ClusterLoggingUpdate(d *schema.ResourceData, meta interface
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for cluster Logging (%s) to be updated: %s", newClusterLogging.ID, waitErr)
 	}
 
-	return resourceRancher2ClusterLoggingRead(d, meta)
+	return resourceRancher2ClusterLoggingRead(ctx, d, meta)
 }
 
-func resourceRancher2ClusterLoggingDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterLoggingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Cluster Logging ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -208,7 +210,7 @@ func resourceRancher2ClusterLoggingDelete(d *schema.ResourceData, meta interface
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for cluster logging (%s) to be removed: %s", id, waitErr)

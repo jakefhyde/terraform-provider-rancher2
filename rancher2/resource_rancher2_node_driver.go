@@ -1,23 +1,25 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2NodeDriver() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2NodeDriverCreate,
-		Read:   resourceRancher2NodeDriverRead,
-		Update: resourceRancher2NodeDriverUpdate,
-		Delete: resourceRancher2NodeDriverDelete,
+		CreateContext: resourceRancher2NodeDriverCreate,
+		ReadContext:   resourceRancher2NodeDriverRead,
+		UpdateContext: resourceRancher2NodeDriverUpdate,
+		DeleteContext: resourceRancher2NodeDriverDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2NodeDriverImport,
+			StateContext: resourceRancher2NodeDriverImport,
 		},
 		Schema: nodeDriverFields(),
 		Timeouts: &schema.ResourceTimeout{
@@ -28,7 +30,7 @@ func resourceRancher2NodeDriver() *schema.Resource {
 	}
 }
 
-func resourceRancher2NodeDriverCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2NodeDriverCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	nodeDriver := expandNodeDriver(d)
 
 	log.Printf("[INFO] Creating Node Driver %s", nodeDriver.Name)
@@ -53,15 +55,15 @@ func resourceRancher2NodeDriverCreate(d *schema.ResourceData, meta interface{}) 
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for node driver (%s) to be created: %s", newNodeDriver.ID, waitErr)
 	}
 
-	return resourceRancher2NodeDriverRead(d, meta)
+	return resourceRancher2NodeDriverRead(ctx, d, meta)
 }
 
-func resourceRancher2NodeDriverRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2NodeDriverRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Node Driver ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -80,7 +82,7 @@ func resourceRancher2NodeDriverRead(d *schema.ResourceData, meta interface{}) er
 	return flattenNodeDriver(d, nodeDriver)
 }
 
-func resourceRancher2NodeDriverUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2NodeDriverUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Node Driver ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -119,16 +121,16 @@ func resourceRancher2NodeDriverUpdate(d *schema.ResourceData, meta interface{}) 
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for node driver (%s) to be updated: %s", newNodeDriver.ID, waitErr)
 	}
 
-	return resourceRancher2NodeDriverRead(d, meta)
+	return resourceRancher2NodeDriverRead(ctx, d, meta)
 }
 
-func resourceRancher2NodeDriverDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2NodeDriverDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Node Driver ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -163,7 +165,7 @@ func resourceRancher2NodeDriverDelete(d *schema.ResourceData, meta interface{}) 
 			MinTimeout: 3 * time.Second,
 		}
 
-		_, waitErr := stateConf.WaitForState()
+		_, waitErr := stateConf.WaitForStateContext(ctx)
 		if waitErr != nil {
 			return fmt.Errorf(
 				"[ERROR] waiting for node driver (%s) to be removed: %s", id, waitErr)

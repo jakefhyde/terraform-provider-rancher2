@@ -1,7 +1,7 @@
 package rancher2
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 const (
@@ -65,7 +65,6 @@ func clusterRKEConfigFieldsV0() map[string]*schema.Schema {
 		},
 		"cloud_provider": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Optional: true,
 			Computed: true,
 			Elem: &schema.Resource{
@@ -74,7 +73,6 @@ func clusterRKEConfigFieldsV0() map[string]*schema.Schema {
 		},
 		"dns": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Optional: true,
 			Computed: true,
 			Elem: &schema.Resource{
@@ -242,7 +240,6 @@ func clusterRKEConfigFields() map[string]*schema.Schema {
 		},
 		"cloud_provider": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Optional: true,
 			Computed: true,
 			Elem: &schema.Resource{
@@ -251,7 +248,6 @@ func clusterRKEConfigFields() map[string]*schema.Schema {
 		},
 		"dns": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Optional: true,
 			Computed: true,
 			Elem: &schema.Resource{
@@ -432,7 +428,6 @@ func clusterRKEConfigFieldsData() map[string]*schema.Schema {
 		},
 		"cloud_provider": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Optional: true,
 			Computed: true,
 			Elem: &schema.Resource{
@@ -441,7 +436,6 @@ func clusterRKEConfigFieldsData() map[string]*schema.Schema {
 		},
 		"dns": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Optional: true,
 			Computed: true,
 			Elem: &schema.Resource{

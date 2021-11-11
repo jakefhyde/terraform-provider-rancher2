@@ -1,25 +1,27 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2AuthConfigOKTA() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2AuthConfigOKTACreate,
-		Read:   resourceRancher2AuthConfigOKTARead,
-		Update: resourceRancher2AuthConfigOKTAUpdate,
-		Delete: resourceRancher2AuthConfigOKTADelete,
+		CreateContext: resourceRancher2AuthConfigOKTACreate,
+		ReadContext:   resourceRancher2AuthConfigOKTARead,
+		UpdateContext: resourceRancher2AuthConfigOKTAUpdate,
+		DeleteContext: resourceRancher2AuthConfigOKTADelete,
 
 		Schema: authConfigOKTAFields(),
 	}
 }
 
-func resourceRancher2AuthConfigOKTACreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigOKTACreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
 		return err
@@ -52,10 +54,10 @@ func resourceRancher2AuthConfigOKTACreate(d *schema.ResourceData, meta interface
 		return fmt.Errorf("[ERROR] Updating Auth Config %s: %s", AuthConfigOKTAName, err)
 	}
 
-	return resourceRancher2AuthConfigOKTARead(d, meta)
+	return resourceRancher2AuthConfigOKTARead(ctx, d, meta)
 }
 
-func resourceRancher2AuthConfigOKTARead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigOKTARead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Auth Config %s", AuthConfigOKTAName)
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -85,13 +87,13 @@ func resourceRancher2AuthConfigOKTARead(d *schema.ResourceData, meta interface{}
 	return nil
 }
 
-func resourceRancher2AuthConfigOKTAUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigOKTAUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Auth Config %s", AuthConfigOKTAName)
 
 	return resourceRancher2AuthConfigOKTACreate(d, meta)
 }
 
-func resourceRancher2AuthConfigOKTADelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigOKTADelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Disabling Auth Config %s", AuthConfigOKTAName)
 
 	client, err := meta.(*Config).ManagementClient()

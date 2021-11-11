@@ -1,23 +1,25 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2ProjectLogging() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2ProjectLoggingCreate,
-		Read:   resourceRancher2ProjectLoggingRead,
-		Update: resourceRancher2ProjectLoggingUpdate,
-		Delete: resourceRancher2ProjectLoggingDelete,
+		CreateContext: resourceRancher2ProjectLoggingCreate,
+		ReadContext:   resourceRancher2ProjectLoggingRead,
+		UpdateContext: resourceRancher2ProjectLoggingUpdate,
+		DeleteContext: resourceRancher2ProjectLoggingDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2ProjectLoggingImport,
+			StateContext: resourceRancher2ProjectLoggingImport,
 		},
 
 		Schema: projectLoggingFields(),
@@ -29,7 +31,7 @@ func resourceRancher2ProjectLogging() *schema.Resource {
 	}
 }
 
-func resourceRancher2ProjectLoggingCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectLoggingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	projectLogging, err := expandProjectLogging(d)
 	if err != nil {
 		return err
@@ -62,16 +64,16 @@ func resourceRancher2ProjectLoggingCreate(d *schema.ResourceData, meta interface
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for project logging (%s) to be created: %s", newProjectLogging.ID, waitErr)
 	}
 
-	return resourceRancher2ProjectLoggingRead(d, meta)
+	return resourceRancher2ProjectLoggingRead(ctx, d, meta)
 }
 
-func resourceRancher2ProjectLoggingRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectLoggingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Project Logging ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -91,7 +93,7 @@ func resourceRancher2ProjectLoggingRead(d *schema.ResourceData, meta interface{}
 	return flattenProjectLogging(d, projectLogging)
 }
 
-func resourceRancher2ProjectLoggingUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectLoggingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Project Logging ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -165,16 +167,16 @@ func resourceRancher2ProjectLoggingUpdate(d *schema.ResourceData, meta interface
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for project Logging (%s) to be updated: %s", newProjectLogging.ID, waitErr)
 	}
 
-	return resourceRancher2ProjectLoggingRead(d, meta)
+	return resourceRancher2ProjectLoggingRead(ctx, d, meta)
 }
 
-func resourceRancher2ProjectLoggingDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectLoggingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Project Logging ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -208,7 +210,7 @@ func resourceRancher2ProjectLoggingDelete(d *schema.ResourceData, meta interface
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for project logging (%s) to be removed: %s", id, waitErr)

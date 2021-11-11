@@ -1,32 +1,34 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceRancher2Feature() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2FeatureCreate,
-		Read:   resourceRancher2FeatureRead,
-		Update: resourceRancher2FeatureUpdate,
-		Delete: resourceRancher2FeatureDelete,
+		CreateContext: resourceRancher2FeatureCreate,
+		ReadContext:   resourceRancher2FeatureRead,
+		UpdateContext: resourceRancher2FeatureUpdate,
+		DeleteContext: resourceRancher2FeatureDelete,
 		Schema: featureFields(),
 	}
 }
 
-func resourceRancher2FeatureCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2FeatureCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// New features can't be created from the Rancher API just update existing
 	d.SetId(d.Get("name").(string))
 
-	return resourceRancher2FeatureUpdate(d, meta)
+	return resourceRancher2FeatureUpdate(ctx, d, meta)
 }
 
-func resourceRancher2FeatureRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2FeatureRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	name := d.Get("name").(string)
 	log.Printf("[INFO] Refreshing Rancher2 Feature ID %s", d.Id())
 
@@ -53,7 +55,7 @@ func resourceRancher2FeatureRead(d *schema.ResourceData, meta interface{}) error
 	return nil
 }
 
-func resourceRancher2FeatureUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2FeatureUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Feature ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -88,16 +90,16 @@ func resourceRancher2FeatureUpdate(d *schema.ResourceData, meta interface{}) err
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for feature (%s) to be updated: %s", newFeature.ID, waitErr)
 	}
 
-	return resourceRancher2FeatureRead(d, meta)
+	return resourceRancher2FeatureRead(ctx, d, meta)
 }
 
-func resourceRancher2FeatureDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2FeatureDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Feature ID %s", d.Id())
 	// Not removing feature from Rancher just from tfstate
 	d.SetId("")

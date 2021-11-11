@@ -6,8 +6,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rancher/norman/types"
 	"github.com/rancher/rancher/pkg/apis/catalog.cattle.io/v1"
 	"golang.org/x/sync/errgroup"
@@ -15,12 +16,12 @@ import (
 
 func resourceRancher2CatalogV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2CatalogV2Create,
-		Read:   resourceRancher2CatalogV2Read,
-		Update: resourceRancher2CatalogV2Update,
-		Delete: resourceRancher2CatalogV2Delete,
+		CreateContext: resourceRancher2CatalogV2Create,
+		ReadContext:   resourceRancher2CatalogV2Read,
+		UpdateContext: resourceRancher2CatalogV2Update,
+		DeleteContext: resourceRancher2CatalogV2Delete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2CatalogV2Import,
+			StateContext: resourceRancher2CatalogV2Import,
 		},
 		Schema: catalogV2Fields(),
 		Timeouts: &schema.ResourceTimeout{
@@ -31,7 +32,7 @@ func resourceRancher2CatalogV2() *schema.Resource {
 	}
 }
 
-func resourceRancher2CatalogV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2CatalogV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID := d.Get("cluster_id").(string)
 	name := d.Get("name").(string)
 	catalog := expandCatalogV2(d)
@@ -51,14 +52,19 @@ func resourceRancher2CatalogV2Create(d *schema.ResourceData, meta interface{}) e
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for catalog (%s) to be active: %s", newCatalog.ID, waitErr)
 	}
-	return resourceRancher2CatalogV2Read(d, meta)
+	return resourceRancher2CatalogV2Read(ctx, d, meta)
 }
 
-func resourceRancher2CatalogV2Read(d *schema.ResourceData, meta interface{}) error {
+
+func resourceRancher2CatalogV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return diag.FromErr(resourceRancher2CatalogV2ReadImpl(ctx, d, meta))
+}
+
+func resourceRancher2CatalogV2ReadImpl(ctx context.Context, d *schema.ResourceData, meta interface{}) error {
 	clusterID := d.Get("cluster_id").(string)
 	name := d.Get("name").(string)
 	log.Printf("[INFO] Refreshing Catalog V2 %s", name)
@@ -76,7 +82,7 @@ func resourceRancher2CatalogV2Read(d *schema.ResourceData, meta interface{}) err
 	return flattenCatalogV2(d, catalog)
 }
 
-func resourceRancher2CatalogV2Update(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2CatalogV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID := d.Get("cluster_id").(string)
 	name := d.Get("name").(string)
 	catalog := expandCatalogV2(d)
@@ -96,14 +102,14 @@ func resourceRancher2CatalogV2Update(d *schema.ResourceData, meta interface{}) e
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for catalog (%s) to be active: %s", newCatalog.ID, waitErr)
 	}
-	return resourceRancher2CatalogV2Read(d, meta)
+	return resourceRancher2CatalogV2Read(ctx, d, meta)
 }
 
-func resourceRancher2CatalogV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2CatalogV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID := d.Get("cluster_id").(string)
 	name := d.Get("name").(string)
 	log.Printf("[INFO] Deleting Catalog V2 %s", name)
@@ -128,7 +134,7 @@ func resourceRancher2CatalogV2Delete(d *schema.ResourceData, meta interface{}) e
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for catalog (%s) to be deleted: %s", catalog.ID, waitErr)
 	}

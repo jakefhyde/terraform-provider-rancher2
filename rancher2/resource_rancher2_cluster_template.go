@@ -1,23 +1,25 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2ClusterTemplate() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2ClusterTemplateCreate,
-		Read:   resourceRancher2ClusterTemplateRead,
-		Update: resourceRancher2ClusterTemplateUpdate,
-		Delete: resourceRancher2ClusterTemplateDelete,
+		CreateContext: resourceRancher2ClusterTemplateCreate,
+		ReadContext:   resourceRancher2ClusterTemplateRead,
+		UpdateContext: resourceRancher2ClusterTemplateUpdate,
+		DeleteContext: resourceRancher2ClusterTemplateDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2ClusterTemplateImport,
+			StateContext: resourceRancher2ClusterTemplateImport,
 		},
 		Schema:        clusterTemplateFields(),
 		SchemaVersion: 1,
@@ -35,10 +37,10 @@ func resourceRancher2ClusterTemplate() *schema.Resource {
 		},
 		CustomizeDiff: customdiff.Sequence(
 			customdiff.IfValueChange("template_revisions",
-				func(old, new, meta interface{}) bool {
+				func(ctx context.Context, old, new, meta interface{}) bool {
 					return true
 				},
-				func(d *schema.ResourceDiff, meta interface{}) error {
+				func(ctx context.Context,d *schema.ResourceDiff, meta interface{}) error {
 					if !d.HasChange("template_revisions") {
 						return nil
 					}
@@ -85,7 +87,7 @@ func resourceRancher2ClusterTemplate() *schema.Resource {
 					}
 					return d.SetNew("template_revisions", sortedNewInput)
 				}),
-			customdiff.ValidateValue("template_revisions", func(val, meta interface{}) error {
+			customdiff.ValidateValue("template_revisions", func(ctx context.Context, val, meta interface{}) error {
 				hasDefault := false
 				names := map[string]int{}
 				input := val.([]interface{})
@@ -120,14 +122,14 @@ func resourceRancher2ClusterTemplateResourceV0() *schema.Resource {
 	}
 }
 
-func resourceRancher2ClusterTemplateStateUpgradeV0(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func resourceRancher2ClusterTemplateStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	if tmplRevisions, ok := rawState["template_revisions"].([]interface{}); ok && len(tmplRevisions) > 0 {
 		for i1 := range tmplRevisions {
 			if tmplRevision, ok := tmplRevisions[i1].(map[string]interface{}); ok && len(tmplRevision) > 0 {
 				if clusterConfigs, ok := tmplRevision["cluster_config"].([]interface{}); ok && len(clusterConfigs) > 0 {
 					for i2 := range clusterConfigs {
 						if clusterConfig, ok := clusterConfigs[i2].(map[string]interface{}); ok && len(clusterConfig) > 0 {
-							newValue, err := resourceRancher2ClusterStateUpgradeV0(clusterConfig, meta)
+							newValue, err := resourceRancher2ClusterStateUpgradeV0(ctx, clusterConfig, meta)
 							if err != nil {
 								return nil, fmt.Errorf("Upgrading Cluster Template schema V0: %v", err)
 							}
@@ -141,7 +143,7 @@ func resourceRancher2ClusterTemplateStateUpgradeV0(rawState map[string]interface
 	return rawState, nil
 }
 
-func resourceRancher2ClusterTemplateCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterTemplateCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	ctrIndex, clusterTemplate, clusterTemplateRevisions, err := expandClusterTemplate(d)
 	if err != nil {
 		return err
@@ -178,10 +180,14 @@ func resourceRancher2ClusterTemplateCreate(d *schema.ResourceData, meta interfac
 		}
 	}
 
-	return resourceRancher2ClusterTemplateRead(d, meta)
+	return resourceRancher2ClusterTemplateRead(ctx, d, meta)
 }
 
-func resourceRancher2ClusterTemplateRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterTemplateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return diag.FromErr(resourceRancher2ClusterTemplateReadImpl(ctx, d, meta))
+}
+
+func resourceRancher2ClusterTemplateReadImpl(ctx context.Context, d *schema.ResourceData, meta interface{}) error {
 	id := d.Id()
 	log.Printf("[INFO] Refreshing Cluster Template ID %s", id)
 
@@ -208,7 +214,7 @@ func resourceRancher2ClusterTemplateRead(d *schema.ResourceData, meta interface{
 	return flattenClusterTemplate(d, clusterTemplate, clusterTemplateRevisions)
 }
 
-func resourceRancher2ClusterTemplateUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterTemplateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	id := d.Id()
 	log.Printf("[INFO] Updating Cluster Template ID %s", id)
 
@@ -258,10 +264,10 @@ func resourceRancher2ClusterTemplateUpdate(d *schema.ResourceData, meta interfac
 		}
 	}
 
-	return resourceRancher2ClusterTemplateRead(d, meta)
+	return resourceRancher2ClusterTemplateRead(ctx, d, meta)
 }
 
-func resourceRancher2ClusterTemplateDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterTemplateDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Cluster Template ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()

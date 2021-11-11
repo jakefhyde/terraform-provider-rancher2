@@ -1,8 +1,8 @@
 package rancher2
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
@@ -125,7 +125,6 @@ func clusterDataFieldsV0() map[string]*schema.Schema {
 		},
 		"rke_config": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Optional: true,
 			Computed: true,
 			Elem: &schema.Resource{
@@ -134,7 +133,6 @@ func clusterDataFieldsV0() map[string]*schema.Schema {
 		},
 		"k3s_config": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Computed: true,
 			Elem: &schema.Resource{
 				Schema: clusterK3SConfigFields(),
@@ -142,7 +140,6 @@ func clusterDataFieldsV0() map[string]*schema.Schema {
 		},
 		"eks_config": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Computed: true,
 			Elem: &schema.Resource{
 				Schema: clusterEKSConfigFields(),
@@ -150,7 +147,6 @@ func clusterDataFieldsV0() map[string]*schema.Schema {
 		},
 		"aks_config": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Computed: true,
 			Elem: &schema.Resource{
 				Schema: clusterAKSConfigFields(),
@@ -158,7 +154,6 @@ func clusterDataFieldsV0() map[string]*schema.Schema {
 		},
 		"gke_config": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Computed: true,
 			Elem: &schema.Resource{
 				Schema: clusterGKEConfigFields(),
@@ -178,7 +173,6 @@ func clusterDataFieldsV0() map[string]*schema.Schema {
 		},
 		"cluster_auth_endpoint": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Computed: true,
 			Elem: &schema.Resource{
 				Schema: clusterAuthEndpoint(),
@@ -195,7 +189,6 @@ func clusterDataFieldsV0() map[string]*schema.Schema {
 		},
 		"cluster_registration_token": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Computed: true,
 			Elem: &schema.Resource{
 				Schema: clusterRegistationTokenFields(),
@@ -346,7 +339,6 @@ func clusterFieldsV0() map[string]*schema.Schema {
 		},
 		"cluster_auth_endpoint": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Optional: true,
 			Computed: true,
 			Elem: &schema.Resource{
@@ -364,7 +356,6 @@ func clusterFieldsV0() map[string]*schema.Schema {
 		},
 		"cluster_registration_token": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Computed: true,
 			Elem: &schema.Resource{
 				Schema: clusterRegistationTokenFields(),
@@ -612,7 +603,6 @@ func clusterFields() map[string]*schema.Schema {
 		},
 		"cluster_auth_endpoint": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Optional: true,
 			Computed: true,
 			Elem: &schema.Resource{
@@ -630,7 +620,6 @@ func clusterFields() map[string]*schema.Schema {
 		},
 		"cluster_registration_token": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Computed: true,
 			Elem: &schema.Resource{
 				Schema: clusterRegistationTokenFields(),

@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
@@ -56,7 +56,7 @@ func TestAccRancher2ClusterLogging_basic_syslog(t *testing.T) {
 	var cluster *managementClient.ClusterLogging
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2ClusterLoggingDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -91,7 +91,7 @@ func TestAccRancher2ClusterLogging_disappears_syslog(t *testing.T) {
 	var cluster *managementClient.ClusterLogging
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2ClusterLoggingDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -139,7 +139,7 @@ func testAccRancher2ClusterLoggingDisappears(clu *managementClient.ClusterLoggin
 				MinTimeout: 3 * time.Second,
 			}
 
-			_, waitErr := stateConf.WaitForState()
+			_, waitErr := stateConf.WaitForStateContext(ctx)
 			if waitErr != nil {
 				return fmt.Errorf(
 					"[ERROR] waiting for cluster logging (%s) to be removed: %s", clu.ID, waitErr)

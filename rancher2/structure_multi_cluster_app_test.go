@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
@@ -30,8 +30,8 @@ func init() {
 		{
 			ProjectID:   "project_id",
 			AppID:       "app_id",
-			Healthstate: "health_state",
-			State:       "state",
+			HealthStateContext: "health_state",
+			StateContext:       "state",
 		},
 	}
 	testMultiClusterAppTargetsInterface = []interface{}{
@@ -90,7 +90,7 @@ func init() {
 		},
 	}
 	testMultiClusterAppUpgradeStrategyConf = &managementClient.UpgradeStrategy{
-		RollingUpdate: testMultiClusterAppRollingUpdateConf,
+		RollingUpdateContext: testMultiClusterAppRollingUpdateConf,
 	}
 	testMultiClusterAppUpgradeStrategyInterface = []interface{}{
 		map[string]interface{}{

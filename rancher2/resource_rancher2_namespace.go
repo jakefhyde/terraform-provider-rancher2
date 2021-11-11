@@ -1,23 +1,25 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	clusterClient "github.com/rancher/rancher/pkg/client/generated/cluster/v3"
 )
 
 func resourceRancher2Namespace() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2NamespaceCreate,
-		Read:   resourceRancher2NamespaceRead,
-		Update: resourceRancher2NamespaceUpdate,
-		Delete: resourceRancher2NamespaceDelete,
+		CreateContext: resourceRancher2NamespaceCreate,
+		ReadContext:   resourceRancher2NamespaceRead,
+		UpdateContext: resourceRancher2NamespaceUpdate,
+		DeleteContext: resourceRancher2NamespaceDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2NamespaceImport,
+			StateContext: resourceRancher2NamespaceImport,
 		},
 
 		Schema: namespaceFields(),
@@ -29,7 +31,7 @@ func resourceRancher2Namespace() *schema.Resource {
 	}
 }
 
-func resourceRancher2NamespaceCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2NamespaceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID, err := clusterIDFromProjectID(d.Get("project_id").(string))
 	if err != nil {
 		return err
@@ -74,16 +76,16 @@ func resourceRancher2NamespaceCreate(d *schema.ResourceData, meta interface{}) e
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for namespace (%s) to be created: %s", newNs.ID, waitErr)
 	}
 
-	return resourceRancher2NamespaceRead(d, meta)
+	return resourceRancher2NamespaceRead(ctx, d, meta)
 }
 
-func resourceRancher2NamespaceRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2NamespaceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID, _ := splitProjectID(d.Get("project_id").(string))
 
 	log.Printf("[INFO] Refreshing Namespace ID %s", d.Id())
@@ -121,7 +123,7 @@ func resourceRancher2NamespaceRead(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
-func resourceRancher2NamespaceUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2NamespaceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID, projectID := splitProjectID(d.Get("project_id").(string))
 
 	log.Printf("[INFO] Updating Namespace ID %s", d.Id())
@@ -173,7 +175,7 @@ func resourceRancher2NamespaceUpdate(d *schema.ResourceData, meta interface{}) e
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for namespace (%s) to be updated: %s", newNs.ID, waitErr)
@@ -184,10 +186,10 @@ func resourceRancher2NamespaceUpdate(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 
-	return resourceRancher2NamespaceRead(d, meta)
+	return resourceRancher2NamespaceRead(ctx, d, meta)
 }
 
-func resourceRancher2NamespaceDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2NamespaceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID, _ := splitProjectID(d.Get("project_id").(string))
 
 	log.Printf("[INFO] Deleting Namespace ID %s", d.Id())
@@ -223,7 +225,7 @@ func resourceRancher2NamespaceDelete(d *schema.ResourceData, meta interface{}) e
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for namespace (%s) to be removed: %s", id, waitErr)

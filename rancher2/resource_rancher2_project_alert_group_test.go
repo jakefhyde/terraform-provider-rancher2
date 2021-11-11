@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
@@ -48,7 +48,7 @@ func TestAccRancher2ProjectAlertGroup_basic(t *testing.T) {
 	var ag *managementClient.ProjectAlertGroup
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2ProjectAlertGroupDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -89,7 +89,7 @@ func TestAccRancher2ProjectAlertGroup_disappears(t *testing.T) {
 	var ag *managementClient.ProjectAlertGroup
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2ProjectAlertGroupDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -137,7 +137,7 @@ func testAccRancher2ProjectAlertGroupDisappears(ag *managementClient.ProjectAler
 				MinTimeout: 3 * time.Second,
 			}
 
-			_, waitErr := stateConf.WaitForState()
+			_, waitErr := stateConf.WaitForStateContext(ctx)
 			if waitErr != nil {
 				return fmt.Errorf(
 					"[ERROR] waiting for project alert group (%s) to be removed: %s", rs.Primary.ID, waitErr)

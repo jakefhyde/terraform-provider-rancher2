@@ -4,8 +4,9 @@ go 1.16
 
 require (
 	github.com/ghodss/yaml v1.0.0
-	github.com/hashicorp/go-version v1.2.0
-	github.com/hashicorp/terraform-plugin-sdk v1.14.0
+	github.com/hashicorp/go-version v1.3.0
+	github.com/hashicorp/hcl/v2 v2.8.2 // indirect
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.1
 	github.com/rancher/norman v0.0.0-20220107203912-4feb41eafabd
 	github.com/rancher/rancher v0.0.0-20220209172806-237289541582
 	github.com/rancher/rancher/pkg/apis v0.0.0

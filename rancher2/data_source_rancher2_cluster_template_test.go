@@ -3,7 +3,7 @@ package rancher2
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccRancher2ClusterTemplateDataSource(t *testing.T) {
@@ -15,7 +15,7 @@ data "` + testAccRancher2ClusterTemplateType + `" "foo" {
 	name := "data." + testAccRancher2ClusterTemplateType + ".foo"
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckRancher2ClusterTemplateDataSourceConfig,

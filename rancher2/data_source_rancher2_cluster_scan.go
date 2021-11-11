@@ -1,14 +1,16 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceRancher2ClusterScan() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceRancher2ClusterScanRead,
+		ReadContext: dataSourceRancher2ClusterScanRead,
 
 		Schema: map[string]*schema.Schema{
 			"cluster_id": {
@@ -29,7 +31,6 @@ func dataSourceRancher2ClusterScan() *schema.Resource {
 			},
 			"scan_config": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: clusterScanConfigFields(),
@@ -58,10 +59,10 @@ func dataSourceRancher2ClusterScan() *schema.Resource {
 	}
 }
 
-func dataSourceRancher2ClusterScanRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceRancher2ClusterScanRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	clusterID := d.Get("cluster_id").(string)
@@ -77,18 +78,18 @@ func dataSourceRancher2ClusterScanRead(d *schema.ResourceData, meta interface{})
 
 	clusterScans, err := client.ClusterScan.List(listOpts)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	count := len(clusterScans.Data)
 	if count <= 0 {
-		return fmt.Errorf("[ERROR] cluster scan with cluster ID \"%s\" not found", clusterID)
+		return diag.FromErr(fmt.Errorf("[ERROR] cluster scan with cluster ID \"%s\" not found", clusterID))
 	}
 	if count > 1 {
-		return fmt.Errorf("[ERROR] found %d cluster scan with cluster ID \"%s\"", count, clusterID)
+		return diag.FromErr(fmt.Errorf("[ERROR] found %d cluster scan with cluster ID \"%s\"", count, clusterID))
 	}
 
 	d.SetId(clusterScans.Data[0].ID)
 
-	return flattenClusterScan(d, &clusterScans.Data[0])
+	return diag.FromErr(flattenClusterScan(d, &clusterScans.Data[0]))
 }

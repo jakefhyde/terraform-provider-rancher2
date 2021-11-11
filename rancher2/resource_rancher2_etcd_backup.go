@@ -1,23 +1,25 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2EtcdBackup() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2EtcdBackupCreate,
-		Read:   resourceRancher2EtcdBackupRead,
-		Update: resourceRancher2EtcdBackupUpdate,
-		Delete: resourceRancher2EtcdBackupDelete,
+		CreateContext: resourceRancher2EtcdBackupCreate,
+		ReadContext:   resourceRancher2EtcdBackupRead,
+		UpdateContext: resourceRancher2EtcdBackupUpdate,
+		DeleteContext: resourceRancher2EtcdBackupDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2EtcdBackupImport,
+			StateContext: resourceRancher2EtcdBackupImport,
 		},
 
 		Schema: etcdBackupFields(),
@@ -29,7 +31,7 @@ func resourceRancher2EtcdBackup() *schema.Resource {
 	}
 }
 
-func resourceRancher2EtcdBackupCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2EtcdBackupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
 		return err
@@ -62,15 +64,15 @@ func resourceRancher2EtcdBackupCreate(d *schema.ResourceData, meta interface{}) 
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for etcd backup (%s) to be created: %s", newEtcdBackup.ID, waitErr)
 	}
 
-	return resourceRancher2EtcdBackupRead(d, meta)
+	return resourceRancher2EtcdBackupRead(ctx, d, meta)
 }
 
-func resourceRancher2EtcdBackupRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2EtcdBackupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Etcd Backup ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -90,7 +92,7 @@ func resourceRancher2EtcdBackupRead(d *schema.ResourceData, meta interface{}) er
 	return flattenEtcdBackup(d, etcdBackup)
 }
 
-func resourceRancher2EtcdBackupUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2EtcdBackupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Etcd Backup ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -128,16 +130,16 @@ func resourceRancher2EtcdBackupUpdate(d *schema.ResourceData, meta interface{}) 
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for etcd backup (%s) to be updated: %s", newEtcdBackup.ID, waitErr)
 	}
 
-	return resourceRancher2EtcdBackupRead(d, meta)
+	return resourceRancher2EtcdBackupRead(ctx, d, meta)
 }
 
-func resourceRancher2EtcdBackupDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2EtcdBackupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Etcd Backup ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -171,7 +173,7 @@ func resourceRancher2EtcdBackupDelete(d *schema.ResourceData, meta interface{}) 
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for etcd backup (%s) to be removed: %s", id, waitErr)
 	}

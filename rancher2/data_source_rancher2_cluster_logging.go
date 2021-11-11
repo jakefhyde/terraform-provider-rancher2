@@ -1,14 +1,16 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceRancher2ClusterLogging() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceRancher2ClusterLoggingRead,
+		ReadContext: dataSourceRancher2ClusterLoggingRead,
 
 		Schema: map[string]*schema.Schema{
 			"cluster_id": {
@@ -21,7 +23,6 @@ func dataSourceRancher2ClusterLogging() *schema.Resource {
 			},
 			"custom_target_config": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: loggingCustomTargetConfigFields(),
@@ -34,7 +35,6 @@ func dataSourceRancher2ClusterLogging() *schema.Resource {
 			},
 			"elasticsearch_config": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: loggingElasticsearchConfigFields(),
@@ -42,7 +42,6 @@ func dataSourceRancher2ClusterLogging() *schema.Resource {
 			},
 			"fluentd_config": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: loggingFluentdConfigFields(),
@@ -50,7 +49,6 @@ func dataSourceRancher2ClusterLogging() *schema.Resource {
 			},
 			"kafka_config": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: loggingKafkaConfigFields(),
@@ -74,7 +72,6 @@ func dataSourceRancher2ClusterLogging() *schema.Resource {
 			},
 			"splunk_config": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: loggingSplunkConfigFields(),
@@ -82,7 +79,6 @@ func dataSourceRancher2ClusterLogging() *schema.Resource {
 			},
 			"syslog_config": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: loggingSyslogConfigFields(),
@@ -100,10 +96,10 @@ func dataSourceRancher2ClusterLogging() *schema.Resource {
 	}
 }
 
-func dataSourceRancher2ClusterLoggingRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceRancher2ClusterLoggingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	clusterID := d.Get("cluster_id").(string)
@@ -115,16 +111,16 @@ func dataSourceRancher2ClusterLoggingRead(d *schema.ResourceData, meta interface
 
 	clusterLoggings, err := client.ClusterLogging.List(listOpts)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	count := len(clusterLoggings.Data)
 	if count <= 0 {
-		return fmt.Errorf("[ERROR] cluster logging on cluster ID \"%s\" not found", clusterID)
+		return diag.FromErr(fmt.Errorf("[ERROR] cluster logging on cluster ID \"%s\" not found", clusterID))
 	}
 	if count > 1 {
-		return fmt.Errorf("[ERROR] found %d cluster logging on cluster ID \"%s\"", count, clusterID)
+		return diag.FromErr(fmt.Errorf("[ERROR] found %d cluster logging on cluster ID \"%s\"", count, clusterID))
 	}
 
-	return flattenClusterLogging(d, &clusterLoggings.Data[0])
+	return diag.FromErr(flattenClusterLogging(d, &clusterLoggings.Data[0]))
 }

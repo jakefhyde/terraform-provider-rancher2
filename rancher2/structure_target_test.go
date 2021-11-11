@@ -17,8 +17,8 @@ func init() {
 		{
 			ProjectID:   "project_id",
 			AppID:       "app_id",
-			Healthstate: "health_state",
-			State:       "state",
+			HealthStateContext: "health_state",
+			StateContext:       "state",
 		},
 	}
 	testTargetsInterface = []interface{}{

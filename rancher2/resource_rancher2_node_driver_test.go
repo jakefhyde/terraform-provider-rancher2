@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
@@ -45,7 +45,7 @@ func TestAccRancher2NodeDriver_basic(t *testing.T) {
 	name := testAccRancher2NodeDriverType + ".foo"
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2NodeDriverDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -103,7 +103,7 @@ func TestAccRancher2NodeDriver_disappears(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2NodeDriverDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -151,7 +151,7 @@ func testAccRancher2NodeDriverDisappears(nodeDriver *managementClient.NodeDriver
 				MinTimeout: 3 * time.Second,
 			}
 
-			_, waitErr := stateConf.WaitForState()
+			_, waitErr := stateConf.WaitForStateContext(ctx)
 			if waitErr != nil {
 				return fmt.Errorf(
 					"[ERROR] waiting for node driver (%s) to be removed: %s", nodeDriver.ID, waitErr)

@@ -1,26 +1,28 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	norman "github.com/rancher/norman/types"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2AuthConfigFreeIpa() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2AuthConfigFreeIpaCreate,
-		Read:   resourceRancher2AuthConfigFreeIpaRead,
-		Update: resourceRancher2AuthConfigFreeIpaUpdate,
-		Delete: resourceRancher2AuthConfigFreeIpaDelete,
+		CreateContext: resourceRancher2AuthConfigFreeIpaCreate,
+		ReadContext:   resourceRancher2AuthConfigFreeIpaRead,
+		UpdateContext: resourceRancher2AuthConfigFreeIpaUpdate,
+		DeleteContext: resourceRancher2AuthConfigFreeIpaDelete,
 
 		Schema: authConfigFreeIpaFields(),
 	}
 }
 
-func resourceRancher2AuthConfigFreeIpaCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigFreeIpaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
 		return err
@@ -74,10 +76,10 @@ func resourceRancher2AuthConfigFreeIpaCreate(d *schema.ResourceData, meta interf
 		}
 	}
 
-	return resourceRancher2AuthConfigFreeIpaRead(d, meta)
+	return resourceRancher2AuthConfigFreeIpaRead(ctx, d, meta)
 }
 
-func resourceRancher2AuthConfigFreeIpaRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigFreeIpaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Auth Config %s", AuthConfigFreeIpaName)
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -107,13 +109,13 @@ func resourceRancher2AuthConfigFreeIpaRead(d *schema.ResourceData, meta interfac
 	return nil
 }
 
-func resourceRancher2AuthConfigFreeIpaUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigFreeIpaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Auth Config %s", AuthConfigFreeIpaName)
 
 	return resourceRancher2AuthConfigFreeIpaCreate(d, meta)
 }
 
-func resourceRancher2AuthConfigFreeIpaDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigFreeIpaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Disabling Auth Config %s", AuthConfigFreeIpaName)
 
 	client, err := meta.(*Config).ManagementClient()

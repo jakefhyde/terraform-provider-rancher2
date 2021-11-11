@@ -6,20 +6,21 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	norman "github.com/rancher/norman/types"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2NodeTemplate() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2NodeTemplateCreate,
-		Read:   resourceRancher2NodeTemplateRead,
-		Update: resourceRancher2NodeTemplateUpdate,
-		Delete: resourceRancher2NodeTemplateDelete,
+		CreateContext: resourceRancher2NodeTemplateCreate,
+		ReadContext:   resourceRancher2NodeTemplateRead,
+		UpdateContext: resourceRancher2NodeTemplateUpdate,
+		DeleteContext: resourceRancher2NodeTemplateDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2NodeTemplateImport,
+			StateContext: resourceRancher2NodeTemplateImport,
 		},
 
 		Schema: nodeTemplateFields(),
@@ -31,7 +32,7 @@ func resourceRancher2NodeTemplate() *schema.Resource {
 	}
 }
 
-func resourceRancher2NodeTemplateCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2NodeTemplateCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	nodeTemplate := expandNodeTemplate(d)
 
 	log.Printf("[INFO] Creating Node Template %s", nodeTemplate.Name)
@@ -65,15 +66,15 @@ func resourceRancher2NodeTemplateCreate(d *schema.ResourceData, meta interface{}
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for node template (%s) to be created: %s", newNodeTemplate.ID, waitErr)
 	}
 
-	return resourceRancher2NodeTemplateRead(d, meta)
+	return resourceRancher2NodeTemplateRead(ctx, d, meta)
 }
 
-func resourceRancher2NodeTemplateRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2NodeTemplateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Node Template ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -98,7 +99,7 @@ func resourceRancher2NodeTemplateRead(d *schema.ResourceData, meta interface{}) 
 	return flattenNodeTemplate(d, nodeTemplate)
 }
 
-func resourceRancher2NodeTemplateUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2NodeTemplateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Node Template ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -164,16 +165,16 @@ func resourceRancher2NodeTemplateUpdate(d *schema.ResourceData, meta interface{}
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for node template (%s) to be updated: %s", newNodeTemplate.ID, waitErr)
 	}
 
-	return resourceRancher2NodeTemplateRead(d, meta)
+	return resourceRancher2NodeTemplateRead(ctx, d, meta)
 }
 
-func resourceRancher2NodeTemplateDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2NodeTemplateDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Node Template ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -220,7 +221,7 @@ func resourceRancher2NodeTemplateDelete(d *schema.ResourceData, meta interface{}
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for node template (%s) to be removed: %s", id, waitErr)
 	}

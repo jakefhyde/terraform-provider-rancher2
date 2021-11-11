@@ -1,24 +1,26 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 	projectClient "github.com/rancher/rancher/pkg/client/generated/project/v3"
 )
 
 func resourceRancher2Project() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2ProjectCreate,
-		Read:   resourceRancher2ProjectRead,
-		Update: resourceRancher2ProjectUpdate,
-		Delete: resourceRancher2ProjectDelete,
+		CreateContext: resourceRancher2ProjectCreate,
+		ReadContext:   resourceRancher2ProjectRead,
+		UpdateContext: resourceRancher2ProjectUpdate,
+		DeleteContext: resourceRancher2ProjectDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2ProjectImport,
+			StateContext: resourceRancher2ProjectImport,
 		},
 
 		Schema: projectFields(),
@@ -30,7 +32,7 @@ func resourceRancher2Project() *schema.Resource {
 	}
 }
 
-func resourceRancher2ProjectCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
 		return err
@@ -74,7 +76,7 @@ func resourceRancher2ProjectCreate(d *schema.ResourceData, meta interface{}) err
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for project (%s) to be created: %s", newProject.ID, waitErr)
@@ -107,10 +109,10 @@ func resourceRancher2ProjectCreate(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
-	return resourceRancher2ProjectRead(d, meta)
+	return resourceRancher2ProjectRead(ctx, d, meta)
 }
 
-func resourceRancher2ProjectRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Project ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -140,7 +142,7 @@ func resourceRancher2ProjectRead(d *schema.ResourceData, meta interface{}) error
 	return flattenProject(d, project, monitoringInput)
 }
 
-func resourceRancher2ProjectUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Project ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -167,7 +169,7 @@ func resourceRancher2ProjectUpdate(d *schema.ResourceData, meta interface{}) err
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for project (%s) to be updated: %s", newProject.ID, waitErr)
@@ -241,10 +243,10 @@ func resourceRancher2ProjectUpdate(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
-	return resourceRancher2ProjectRead(d, meta)
+	return resourceRancher2ProjectRead(ctx, d, meta)
 }
 
-func resourceRancher2ProjectDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Project ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -278,7 +280,7 @@ func resourceRancher2ProjectDelete(d *schema.ResourceData, meta interface{}) err
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for project (%s) to be removed: %s", id, waitErr)

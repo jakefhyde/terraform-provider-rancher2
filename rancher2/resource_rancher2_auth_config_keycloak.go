@@ -1,25 +1,27 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2AuthConfigKeyCloak() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2AuthConfigKeyCloakCreate,
-		Read:   resourceRancher2AuthConfigKeyCloakRead,
-		Update: resourceRancher2AuthConfigKeyCloakUpdate,
-		Delete: resourceRancher2AuthConfigKeyCloakDelete,
+		CreateContext: resourceRancher2AuthConfigKeyCloakCreate,
+		ReadContext:   resourceRancher2AuthConfigKeyCloakRead,
+		UpdateContext: resourceRancher2AuthConfigKeyCloakUpdate,
+		DeleteContext: resourceRancher2AuthConfigKeyCloakDelete,
 
 		Schema: authConfigKeyCloakFields(),
 	}
 }
 
-func resourceRancher2AuthConfigKeyCloakCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigKeyCloakCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
 		return err
@@ -52,10 +54,10 @@ func resourceRancher2AuthConfigKeyCloakCreate(d *schema.ResourceData, meta inter
 		return fmt.Errorf("[ERROR] Updating Auth Config %s: %s", AuthConfigKeyCloakName, err)
 	}
 
-	return resourceRancher2AuthConfigKeyCloakRead(d, meta)
+	return resourceRancher2AuthConfigKeyCloakRead(ctx, d, meta)
 }
 
-func resourceRancher2AuthConfigKeyCloakRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigKeyCloakRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Auth Config %s", AuthConfigKeyCloakName)
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -85,13 +87,13 @@ func resourceRancher2AuthConfigKeyCloakRead(d *schema.ResourceData, meta interfa
 	return nil
 }
 
-func resourceRancher2AuthConfigKeyCloakUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigKeyCloakUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Auth Config %s", AuthConfigKeyCloakName)
 
 	return resourceRancher2AuthConfigKeyCloakCreate(d, meta)
 }
 
-func resourceRancher2AuthConfigKeyCloakDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigKeyCloakDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Disabling Auth Config %s", AuthConfigKeyCloakName)
 
 	client, err := meta.(*Config).ManagementClient()

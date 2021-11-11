@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const (
@@ -74,7 +74,7 @@ func TestAccRancher2Certificate_basic_Project(t *testing.T) {
 	var reg interface{}
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2CertificateDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -112,7 +112,7 @@ func TestAccRancher2Certificate_disappears_Project(t *testing.T) {
 	var reg interface{}
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2CertificateDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -131,7 +131,7 @@ func TestAccRancher2Certificate_basic_Namespaced(t *testing.T) {
 	var reg interface{}
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2CertificateDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -169,7 +169,7 @@ func TestAccRancher2Certificate_disappears_Namespaced(t *testing.T) {
 	var reg interface{}
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2CertificateDestroy,
 		Steps: []resource.TestStep{
 			{

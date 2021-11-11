@@ -1,21 +1,23 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceRancher2Registry() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2RegistryCreate,
-		Read:   resourceRancher2RegistryRead,
-		Update: resourceRancher2RegistryUpdate,
-		Delete: resourceRancher2RegistryDelete,
+		CreateContext: resourceRancher2RegistryCreate,
+		ReadContext:   resourceRancher2RegistryRead,
+		UpdateContext: resourceRancher2RegistryUpdate,
+		DeleteContext: resourceRancher2RegistryDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2RegistryImport,
+			StateContext: resourceRancher2RegistryImport,
 		},
 
 		Schema: registryFields(),
@@ -27,7 +29,7 @@ func resourceRancher2Registry() *schema.Resource {
 	}
 }
 
-func resourceRancher2RegistryCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2RegistryCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	_, projectID := splitProjectID(d.Get("project_id").(string))
 	name := d.Get("name").(string)
 
@@ -50,10 +52,10 @@ func resourceRancher2RegistryCreate(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	return resourceRancher2RegistryRead(d, meta)
+	return resourceRancher2RegistryRead(ctx, d, meta)
 }
 
-func resourceRancher2RegistryRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2RegistryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	_, projectID := splitProjectID(d.Get("project_id").(string))
 	id := d.Id()
 	namespaceID := d.Get("namespace_id").(string)
@@ -73,7 +75,7 @@ func resourceRancher2RegistryRead(d *schema.ResourceData, meta interface{}) erro
 	return flattenRegistry(d, registry)
 }
 
-func resourceRancher2RegistryUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2RegistryUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	_, projectID := splitProjectID(d.Get("project_id").(string))
 	id := d.Id()
 	namespaceID := d.Get("namespace_id").(string)
@@ -102,10 +104,10 @@ func resourceRancher2RegistryUpdate(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	return resourceRancher2RegistryRead(d, meta)
+	return resourceRancher2RegistryRead(ctx, d, meta)
 }
 
-func resourceRancher2RegistryDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2RegistryDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	_, projectID := splitProjectID(d.Get("project_id").(string))
 	id := d.Id()
 	namespaceID := d.Get("namespace_id").(string)

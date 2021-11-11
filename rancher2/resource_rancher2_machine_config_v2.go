@@ -1,21 +1,23 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	norman "github.com/rancher/norman/types"
 )
 
 func resourceRancher2MachineConfigV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2MachineConfigV2Create,
-		Read:   resourceRancher2MachineConfigV2Read,
-		Update: resourceRancher2MachineConfigV2Update,
-		Delete: resourceRancher2MachineConfigV2Delete,
+		CreateContext: resourceRancher2MachineConfigV2Create,
+		ReadContext:   resourceRancher2MachineConfigV2Read,
+		UpdateContext: resourceRancher2MachineConfigV2Update,
+		DeleteContext: resourceRancher2MachineConfigV2Delete,
 		Schema: machineConfigV2Fields(),
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(10 * time.Minute),
@@ -25,7 +27,7 @@ func resourceRancher2MachineConfigV2() *schema.Resource {
 	}
 }
 
-func resourceRancher2MachineConfigV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2MachineConfigV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	name := d.Get("name").(string)
 	obj := expandMachineConfigV2(d)
 
@@ -46,7 +48,7 @@ func resourceRancher2MachineConfigV2Create(d *schema.ResourceData, meta interfac
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for machine config (%s) to be active: %s", newObj.ID, waitErr)
 	}
@@ -54,7 +56,7 @@ func resourceRancher2MachineConfigV2Create(d *schema.ResourceData, meta interfac
 	return flattenMachineConfigV2(d, newObj)
 }
 
-func resourceRancher2MachineConfigV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2MachineConfigV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Machine Config V2 %s", d.Id())
 
 	kind := d.Get("kind").(string)
@@ -70,7 +72,7 @@ func resourceRancher2MachineConfigV2Read(d *schema.ResourceData, meta interface{
 	return flattenMachineConfigV2(d, obj)
 }
 
-func resourceRancher2MachineConfigV2Update(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2MachineConfigV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	obj := expandMachineConfigV2(d)
 	log.Printf("[INFO] Updating Machine Config V2 %s", d.Id())
 
@@ -88,14 +90,14 @@ func resourceRancher2MachineConfigV2Update(d *schema.ResourceData, meta interfac
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for machine config (%s) to be active: %s", newObj.ID, waitErr)
 	}
-	return resourceRancher2MachineConfigV2Read(d, meta)
+	return resourceRancher2MachineConfigV2Read(ctx, d, meta)
 }
 
-func resourceRancher2MachineConfigV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2MachineConfigV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	name := d.Get("name").(string)
 	kind := d.Get("kind").(string)
 	log.Printf("[INFO] Deleting Machine Config V2 %s", name)
@@ -120,7 +122,7 @@ func resourceRancher2MachineConfigV2Delete(d *schema.ResourceData, meta interfac
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for machine config v2 (%s) to be removed: %s", obj.ID, waitErr)
 	}

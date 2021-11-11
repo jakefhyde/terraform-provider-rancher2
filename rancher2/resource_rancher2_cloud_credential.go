@@ -1,24 +1,26 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	norman "github.com/rancher/norman/types"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2CloudCredential() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2CloudCredentialCreate,
-		Read:   resourceRancher2CloudCredentialRead,
-		Update: resourceRancher2CloudCredentialUpdate,
-		Delete: resourceRancher2CloudCredentialDelete,
+		CreateContext: resourceRancher2CloudCredentialCreate,
+		ReadContext:   resourceRancher2CloudCredentialRead,
+		UpdateContext: resourceRancher2CloudCredentialUpdate,
+		DeleteContext: resourceRancher2CloudCredentialDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2CloudCredentialsImport,
+			StateContext: resourceRancher2CloudCredentialsImport,
 		},
 		Schema: cloudCredentialFields(),
 		Timeouts: &schema.ResourceTimeout{
@@ -29,7 +31,7 @@ func resourceRancher2CloudCredential() *schema.Resource {
 	}
 }
 
-func resourceRancher2CloudCredentialCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2CloudCredentialCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cloudCredential := expandCloudCredential(d)
 
 	log.Printf("[INFO] Creating Cloud Credential %s", cloudCredential.Name)
@@ -62,15 +64,15 @@ func resourceRancher2CloudCredentialCreate(d *schema.ResourceData, meta interfac
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for cloud credential (%s) to be created: %s", newCloudCredential.ID, waitErr)
 	}
 
-	return resourceRancher2CloudCredentialRead(d, meta)
+	return resourceRancher2CloudCredentialRead(ctx, d, meta)
 }
 
-func resourceRancher2CloudCredentialRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2CloudCredentialRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Cloud Credential ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -91,7 +93,7 @@ func resourceRancher2CloudCredentialRead(d *schema.ResourceData, meta interface{
 	return flattenCloudCredential(d, cloudCredential)
 }
 
-func resourceRancher2CloudCredentialUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2CloudCredentialUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Cloud Credential ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -146,16 +148,16 @@ func resourceRancher2CloudCredentialUpdate(d *schema.ResourceData, meta interfac
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for cloud credential (%s) to be updated: %s", newCloudCredential.ID, waitErr)
 	}
 
-	return resourceRancher2CloudCredentialRead(d, meta)
+	return resourceRancher2CloudCredentialRead(ctx, d, meta)
 }
 
-func resourceRancher2CloudCredentialDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2CloudCredentialDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Cloud Credential ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -190,7 +192,7 @@ func resourceRancher2CloudCredentialDelete(d *schema.ResourceData, meta interfac
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for cloud credential (%s) to be removed: %s", id, waitErr)
 	}

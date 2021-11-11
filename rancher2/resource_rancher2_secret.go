@@ -1,21 +1,23 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceRancher2Secret() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2SecretCreate,
-		Read:   resourceRancher2SecretRead,
-		Update: resourceRancher2SecretUpdate,
-		Delete: resourceRancher2SecretDelete,
+		CreateContext: resourceRancher2SecretCreate,
+		ReadContext:   resourceRancher2SecretRead,
+		UpdateContext: resourceRancher2SecretUpdate,
+		DeleteContext: resourceRancher2SecretDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2SecretImport,
+			StateContext: resourceRancher2SecretImport,
 		},
 
 		Schema: secretFields(),
@@ -27,7 +29,7 @@ func resourceRancher2Secret() *schema.Resource {
 	}
 }
 
-func resourceRancher2SecretCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2SecretCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	_, projectID := splitProjectID(d.Get("project_id").(string))
 	name := d.Get("name").(string)
 
@@ -50,10 +52,10 @@ func resourceRancher2SecretCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	return resourceRancher2SecretRead(d, meta)
+	return resourceRancher2SecretRead(ctx, d, meta)
 }
 
-func resourceRancher2SecretRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2SecretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	_, projectID := splitProjectID(d.Get("project_id").(string))
 	id := d.Id()
 	namespaceID := d.Get("namespace_id").(string)
@@ -73,7 +75,7 @@ func resourceRancher2SecretRead(d *schema.ResourceData, meta interface{}) error 
 	return flattenSecret(d, secret)
 }
 
-func resourceRancher2SecretUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2SecretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	_, projectID := splitProjectID(d.Get("project_id").(string))
 	id := d.Id()
 	namespaceID := d.Get("namespace_id").(string)
@@ -102,10 +104,10 @@ func resourceRancher2SecretUpdate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	return resourceRancher2SecretRead(d, meta)
+	return resourceRancher2SecretRead(ctx, d, meta)
 }
 
-func resourceRancher2SecretDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2SecretDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	_, projectID := splitProjectID(d.Get("project_id").(string))
 	id := d.Id()
 	namespaceID := d.Get("namespace_id").(string)

@@ -53,7 +53,7 @@ func init() {
 		},
 	}
 	testUpgradeStrategyConf = &managementClient.UpgradeStrategy{
-		RollingUpdate: testRollingUpdateConf,
+		RollingUpdateContext: testRollingUpdateConf,
 	}
 	testUpgradeStrategyInterface = []interface{}{
 		map[string]interface{}{
@@ -61,7 +61,7 @@ func init() {
 		},
 	}
 	testDeploymentStrategyConf = &managementClient.DeploymentStrategy{
-		RollingUpdate: testRollingUpdateDeploymentConf,
+		RollingUpdateContext: testRollingUpdateDeploymentConf,
 		Strategy:      "strategy",
 	}
 	testDeploymentStrategyInterface = []interface{}{
@@ -71,7 +71,7 @@ func init() {
 		},
 	}
 	testDaemonSetStrategyConf = &managementClient.DaemonSetUpdateStrategy{
-		RollingUpdate: testRollingUpdateDaemonSetConf,
+		RollingUpdateContext: testRollingUpdateDaemonSetConf,
 		Strategy:      "strategy",
 	}
 	testDaemonSetStrategyInterface = []interface{}{

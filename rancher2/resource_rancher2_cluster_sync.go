@@ -1,19 +1,21 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceRancher2ClusterSync() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2ClusterSyncCreate,
-		Read:   resourceRancher2ClusterSyncRead,
-		Update: resourceRancher2ClusterSyncUpdate,
-		Delete: resourceRancher2ClusterSyncDelete,
+		CreateContext: resourceRancher2ClusterSyncCreate,
+		ReadContext:   resourceRancher2ClusterSyncRead,
+		UpdateContext: resourceRancher2ClusterSyncUpdate,
+		DeleteContext: resourceRancher2ClusterSyncDelete,
 
 		Schema: clusterSyncFields(),
 		Timeouts: &schema.ResourceTimeout{
@@ -24,7 +26,7 @@ func resourceRancher2ClusterSync() *schema.Resource {
 	}
 }
 
-func resourceRancher2ClusterSyncCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterSyncCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID := d.Get("cluster_id").(string)
 
 	cluster, err := meta.(*Config).WaitForClusterState(clusterID, clusterActiveCondition, d.Timeout(schema.TimeoutCreate))
@@ -76,10 +78,10 @@ func resourceRancher2ClusterSyncCreate(d *schema.ResourceData, meta interface{})
 
 	d.SetId(clusterID)
 
-	return resourceRancher2ClusterSyncRead(d, meta)
+	return resourceRancher2ClusterSyncRead(ctx, d, meta)
 }
 
-func resourceRancher2ClusterSyncRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterSyncRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID := d.Get("cluster_id").(string)
 
 	active, clus, err := meta.(*Config).isClusterActive(clusterID)
@@ -159,11 +161,11 @@ func resourceRancher2ClusterSyncRead(d *schema.ResourceData, meta interface{}) e
 	return nil
 }
 
-func resourceRancher2ClusterSyncUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterSyncUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return resourceRancher2ClusterSyncCreate(d, meta)
 }
 
-func resourceRancher2ClusterSyncDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterSyncDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	d.SetId("")
 	return nil
 }

@@ -1,19 +1,21 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceRancher2Certificate() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2CertificateCreate,
-		Read:   resourceRancher2CertificateRead,
-		Update: resourceRancher2CertificateUpdate,
-		Delete: resourceRancher2CertificateDelete,
+		CreateContext: resourceRancher2CertificateCreate,
+		ReadContext:   resourceRancher2CertificateRead,
+		UpdateContext: resourceRancher2CertificateUpdate,
+		DeleteContext: resourceRancher2CertificateDelete,
 
 		Schema: certificateFields(),
 		Timeouts: &schema.ResourceTimeout{
@@ -24,7 +26,7 @@ func resourceRancher2Certificate() *schema.Resource {
 	}
 }
 
-func resourceRancher2CertificateCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2CertificateCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	_, projectID := splitProjectID(d.Get("project_id").(string))
 	name := d.Get("name").(string)
 
@@ -50,10 +52,10 @@ func resourceRancher2CertificateCreate(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	return resourceRancher2CertificateRead(d, meta)
+	return resourceRancher2CertificateRead(ctx, d, meta)
 }
 
-func resourceRancher2CertificateRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2CertificateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	_, projectID := splitProjectID(d.Get("project_id").(string))
 	id := d.Id()
 	namespaceID := d.Get("namespace_id").(string)
@@ -73,7 +75,7 @@ func resourceRancher2CertificateRead(d *schema.ResourceData, meta interface{}) e
 	return flattenCertificate(d, certificate)
 }
 
-func resourceRancher2CertificateUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2CertificateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	_, projectID := splitProjectID(d.Get("project_id").(string))
 	id := d.Id()
 	namespaceID := d.Get("namespace_id").(string)
@@ -100,10 +102,10 @@ func resourceRancher2CertificateUpdate(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	return resourceRancher2CertificateRead(d, meta)
+	return resourceRancher2CertificateRead(ctx, d, meta)
 }
 
-func resourceRancher2CertificateDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2CertificateDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	_, projectID := splitProjectID(d.Get("project_id").(string))
 	id := d.Id()
 	namespaceID := d.Get("namespace_id").(string)

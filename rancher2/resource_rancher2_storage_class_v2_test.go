@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const testAccRancher2StorageClassV2Type = "rancher2_storage_class_v2"
@@ -54,7 +54,7 @@ func TestAccRancher2StorageClassV2_basic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2StorageClassV2Destroy,
 		Steps: []resource.TestStep{
 			{
@@ -102,7 +102,7 @@ func TestAccRancher2StorageClassV2_disappears(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2StorageClassV2Destroy,
 		Steps: []resource.TestStep{
 			{
@@ -134,7 +134,7 @@ func testAccRancher2StorageClassV2Disappears(cat *StorageClassV2) resource.TestC
 			}
 			err = deleteStorageClassV2(testAccProvider.Meta().(*Config), clusterID, storageClass)
 			if err != nil {
-				return fmt.Errorf("testAccRancher2StorageClassV2Disappears-delete: %v", err)
+				return fmt.Errorf("testAccRancher2StorageClassV2Disappears-DeleteContext: %v", err)
 			}
 			stateConf := &resource.StateChangeConf{
 				Pending:    []string{},
@@ -144,7 +144,7 @@ func testAccRancher2StorageClassV2Disappears(cat *StorageClassV2) resource.TestC
 				Delay:      1 * time.Second,
 				MinTimeout: 3 * time.Second,
 			}
-			_, waitErr := stateConf.WaitForState()
+			_, waitErr := stateConf.WaitForStateContext(ctx)
 			if waitErr != nil {
 				return fmt.Errorf("[ERROR] waiting for storageClass (%s) to be deleted: %s", storageClass.ID, waitErr)
 			}

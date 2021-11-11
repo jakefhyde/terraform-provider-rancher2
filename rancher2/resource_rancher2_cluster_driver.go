@@ -1,23 +1,25 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2ClusterDriver() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2ClusterDriverCreate,
-		Read:   resourceRancher2ClusterDriverRead,
-		Update: resourceRancher2ClusterDriverUpdate,
-		Delete: resourceRancher2ClusterDriverDelete,
+		CreateContext: resourceRancher2ClusterDriverCreate,
+		ReadContext:   resourceRancher2ClusterDriverRead,
+		UpdateContext: resourceRancher2ClusterDriverUpdate,
+		DeleteContext: resourceRancher2ClusterDriverDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2ClusterDriverImport,
+			StateContext: resourceRancher2ClusterDriverImport,
 		},
 		Schema: clusterDriverFields(),
 		Timeouts: &schema.ResourceTimeout{
@@ -28,7 +30,7 @@ func resourceRancher2ClusterDriver() *schema.Resource {
 	}
 }
 
-func resourceRancher2ClusterDriverCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterDriverCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterDriver := expandClusterDriver(d)
 
 	log.Printf("[INFO] Creating Cluster Driver %s", clusterDriver.Name)
@@ -53,15 +55,15 @@ func resourceRancher2ClusterDriverCreate(d *schema.ResourceData, meta interface{
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for cluster driver (%s) to be created: %s", newClusterDriver.ID, waitErr)
 	}
 
-	return resourceRancher2ClusterDriverRead(d, meta)
+	return resourceRancher2ClusterDriverRead(ctx, d, meta)
 }
 
-func resourceRancher2ClusterDriverRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterDriverRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Cluster Driver ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -80,7 +82,7 @@ func resourceRancher2ClusterDriverRead(d *schema.ResourceData, meta interface{})
 	return flattenClusterDriver(d, clusterDriver)
 }
 
-func resourceRancher2ClusterDriverUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterDriverUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Cluster Driver ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -118,16 +120,16 @@ func resourceRancher2ClusterDriverUpdate(d *schema.ResourceData, meta interface{
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for cluster driver (%s) to be updated: %s", newClusterDriver.ID, waitErr)
 	}
 
-	return resourceRancher2ClusterDriverRead(d, meta)
+	return resourceRancher2ClusterDriverRead(ctx, d, meta)
 }
 
-func resourceRancher2ClusterDriverDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterDriverDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Cluster Driver ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -162,7 +164,7 @@ func resourceRancher2ClusterDriverDelete(d *schema.ResourceData, meta interface{
 			MinTimeout: 3 * time.Second,
 		}
 
-		_, waitErr := stateConf.WaitForState()
+		_, waitErr := stateConf.WaitForStateContext(ctx)
 		if waitErr != nil {
 			return fmt.Errorf(
 				"[ERROR] waiting for cluster driver (%s) to be removed: %s", id, waitErr)

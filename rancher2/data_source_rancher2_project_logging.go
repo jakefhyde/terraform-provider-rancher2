@@ -1,14 +1,16 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceRancher2ProjectLogging() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceRancher2ProjectLoggingRead,
+		ReadContext: dataSourceRancher2ProjectLoggingRead,
 
 		Schema: map[string]*schema.Schema{
 			"project_id": {
@@ -21,7 +23,6 @@ func dataSourceRancher2ProjectLogging() *schema.Resource {
 			},
 			"custom_target_config": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: loggingCustomTargetConfigFields(),
@@ -34,7 +35,6 @@ func dataSourceRancher2ProjectLogging() *schema.Resource {
 			},
 			"elasticsearch_config": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: loggingElasticsearchConfigFields(),
@@ -42,7 +42,6 @@ func dataSourceRancher2ProjectLogging() *schema.Resource {
 			},
 			"fluentd_config": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: loggingFluentdConfigFields(),
@@ -50,7 +49,6 @@ func dataSourceRancher2ProjectLogging() *schema.Resource {
 			},
 			"kafka_config": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: loggingKafkaConfigFields(),
@@ -74,7 +72,6 @@ func dataSourceRancher2ProjectLogging() *schema.Resource {
 			},
 			"splunk_config": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: loggingSplunkConfigFields(),
@@ -82,7 +79,6 @@ func dataSourceRancher2ProjectLogging() *schema.Resource {
 			},
 			"syslog_config": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: loggingSyslogConfigFields(),
@@ -100,10 +96,10 @@ func dataSourceRancher2ProjectLogging() *schema.Resource {
 	}
 }
 
-func dataSourceRancher2ProjectLoggingRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceRancher2ProjectLoggingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	projectID := d.Get("project_id").(string)
@@ -115,16 +111,16 @@ func dataSourceRancher2ProjectLoggingRead(d *schema.ResourceData, meta interface
 
 	projectLoggings, err := client.ProjectLogging.List(listOpts)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	count := len(projectLoggings.Data)
 	if count <= 0 {
-		return fmt.Errorf("[ERROR] project logging on project ID \"%s\" not found", projectID)
+		return diag.FromErr(fmt.Errorf("[ERROR] project logging on project ID \"%s\" not found", projectID))
 	}
 	if count > 1 {
-		return fmt.Errorf("[ERROR] found %d project logging on project ID \"%s\"", count, projectID)
+		return diag.FromErr(fmt.Errorf("[ERROR] found %d project logging on project ID \"%s\"", count, projectID))
 	}
 
-	return flattenProjectLogging(d, &projectLoggings.Data[0])
+	return diag.FromErr(flattenProjectLogging(d, &projectLoggings.Data[0]))
 }

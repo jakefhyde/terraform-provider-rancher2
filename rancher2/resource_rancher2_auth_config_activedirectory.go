@@ -1,26 +1,28 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	norman "github.com/rancher/norman/types"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2AuthConfigActiveDirectory() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2AuthConfigActiveDirectoryCreate,
-		Read:   resourceRancher2AuthConfigActiveDirectoryRead,
-		Update: resourceRancher2AuthConfigActiveDirectoryUpdate,
-		Delete: resourceRancher2AuthConfigActiveDirectoryDelete,
+		CreateContext: resourceRancher2AuthConfigActiveDirectoryCreate,
+		ReadContext:   resourceRancher2AuthConfigActiveDirectoryRead,
+		UpdateContext: resourceRancher2AuthConfigActiveDirectoryUpdate,
+		DeleteContext: resourceRancher2AuthConfigActiveDirectoryDelete,
 
 		Schema: authConfigActiveDirectoryFields(),
 	}
 }
 
-func resourceRancher2AuthConfigActiveDirectoryCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigActiveDirectoryCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
 		return err
@@ -77,10 +79,10 @@ func resourceRancher2AuthConfigActiveDirectoryCreate(d *schema.ResourceData, met
 		}
 	}
 
-	return resourceRancher2AuthConfigActiveDirectoryRead(d, meta)
+	return resourceRancher2AuthConfigActiveDirectoryRead(ctx, d, meta)
 }
 
-func resourceRancher2AuthConfigActiveDirectoryRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigActiveDirectoryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Auth Config %s", AuthConfigActiveDirectoryName)
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -110,13 +112,13 @@ func resourceRancher2AuthConfigActiveDirectoryRead(d *schema.ResourceData, meta 
 	return nil
 }
 
-func resourceRancher2AuthConfigActiveDirectoryUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Auth Config %s", AuthConfigActiveDirectoryName)
 
-	return resourceRancher2AuthConfigActiveDirectoryCreate(d, meta)
+	return resourceRancher2AuthConfigActiveDirectoryCreate(ctx, d, meta)
 }
 
-func resourceRancher2AuthConfigActiveDirectoryDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigActiveDirectoryDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Disabling Auth Config %s", AuthConfigActiveDirectoryName)
 
 	client, err := meta.(*Config).ManagementClient()

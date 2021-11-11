@@ -6,20 +6,21 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceRancher2Bootstrap() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2BootstrapCreate,
-		Read:   resourceRancher2BootstrapRead,
-		Update: resourceRancher2BootstrapUpdate,
-		Delete: resourceRancher2BootstrapDelete,
+		CreateContext: resourceRancher2BootstrapCreate,
+		ReadContext:   resourceRancher2BootstrapRead,
+		UpdateContext: resourceRancher2BootstrapUpdate,
+		DeleteContext: resourceRancher2BootstrapDelete,
 		Schema: bootstrapFields(),
 	}
 }
 
-func resourceRancher2BootstrapCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2BootstrapCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if !meta.(*Config).Bootstrap {
 		return fmt.Errorf("[ERROR] Resource rancher2_bootstrap just available on bootstrap mode")
 	}
@@ -65,7 +66,7 @@ func resourceRancher2BootstrapCreate(d *schema.ResourceData, meta interface{}) e
 		return fmt.Errorf("[ERROR] Creating Admin token: %s", err)
 	}
 
-	// Update new tokenkey
+	// Update new token key
 	d.Set("token_id", tokenID)
 	d.Set("token", token)
 	err = meta.(*Config).UpdateToken(token)
@@ -104,10 +105,10 @@ func resourceRancher2BootstrapCreate(d *schema.ResourceData, meta interface{}) e
 		}
 	}
 
-	return resourceRancher2BootstrapRead(d, meta)
+	return resourceRancher2BootstrapRead(ctx, d, meta)
 }
 
-func resourceRancher2BootstrapRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2BootstrapRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing bootstrap")
 
 	if !meta.(*Config).Bootstrap {
@@ -157,7 +158,7 @@ func resourceRancher2BootstrapRead(d *schema.ResourceData, meta interface{}) err
 	return bootstrapCleanUpTempToken(d, meta)
 }
 
-func resourceRancher2BootstrapUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2BootstrapUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	err := bootstrapDoLogin(d, meta)
 	if err != nil {
 		return err
@@ -225,10 +226,10 @@ func resourceRancher2BootstrapUpdate(d *schema.ResourceData, meta interface{}) e
 	// Set resource ID
 	d.SetId(adminUser.ID)
 
-	return resourceRancher2BootstrapRead(d, meta)
+	return resourceRancher2BootstrapRead(ctx, d, meta)
 }
 
-func resourceRancher2BootstrapDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2BootstrapDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	d.SetId("")
 
 	return nil

@@ -7,8 +7,9 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	norman "github.com/rancher/norman/types"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 	projectClient "github.com/rancher/rancher/pkg/client/generated/project/v3"
@@ -18,14 +19,14 @@ import (
 
 func resourceRancher2Cluster() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2ClusterCreate,
-		Read:   resourceRancher2ClusterRead,
-		Update: resourceRancher2ClusterUpdate,
-		Delete: resourceRancher2ClusterDelete,
+		CreateContext: resourceRancher2ClusterCreate,
+		ReadContext:   resourceRancher2ClusterRead,
+		UpdateContext: resourceRancher2ClusterUpdate,
+		DeleteContext: resourceRancher2ClusterDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2ClusterImport,
+			StateContext: resourceRancher2ClusterImport,
 		},
-		CustomizeDiff: func(d *schema.ResourceDiff, i interface{}) error {
+		CustomizeDiff: func(ctx context.Context, d *schema.ResourceDiff, i interface{}) error {
 			if d.Get("driver") == clusterDriverEKSV2 && d.HasChange("eks_config_v2") {
 				old, new := d.GetChange("eks_config_v2")
 				oldObj := expandClusterEKSConfigV2(old.([]interface{}))
@@ -62,7 +63,7 @@ func resourceRancher2ClusterResourceV0() *schema.Resource {
 	}
 }
 
-func resourceRancher2ClusterStateUpgradeV0(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func resourceRancher2ClusterStateUpgradeV0(_ context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	if rkeConfigs, ok := rawState["rke_config"].([]interface{}); ok && len(rkeConfigs) > 0 {
 		for i1 := range rkeConfigs {
 			if rkeConfig, ok := rkeConfigs[i1].(map[string]interface{}); ok && len(rkeConfig) > 0 {
@@ -116,7 +117,7 @@ func resourceRancher2ClusterStateUpgradeV0(rawState map[string]interface{}, meta
 	return rawState, nil
 }
 
-func resourceRancher2ClusterCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
 		return err
@@ -170,7 +171,7 @@ func resourceRancher2ClusterCreate(d *schema.ResourceData, meta interface{}) err
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for cluster (%s) to be created: %s", newCluster.ID, waitErr)
 	}
@@ -190,12 +191,12 @@ func resourceRancher2ClusterCreate(d *schema.ResourceData, meta interface{}) err
 			Actions: newCluster.Actions,
 		}
 		// Retry enabling monitoring until timeout if got apierr 500 https://github.com/rancher/rancher/issues/30188
-		ctx, cancel := context.WithTimeout(context.Background(), meta.(*Config).Timeout)
+		ctx, cancel := context.WithTimeout(ctx, meta.(*Config).Timeout)
 		defer cancel()
 		for {
 			err = client.APIBaseClient.Action(managementClient.ClusterType, monitoringActionEnable, clusterResource, monitoringInput, nil)
 			if err == nil {
-				return resourceRancher2ClusterRead(d, meta)
+				return resourceRancher2ClusterRead(ctx, d, meta)
 			}
 			if !IsServerError(err) {
 				return err
@@ -208,10 +209,14 @@ func resourceRancher2ClusterCreate(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
-	return resourceRancher2ClusterRead(d, meta)
+	return resourceRancher2ClusterRead(ctx, d, meta)
 }
 
-func resourceRancher2ClusterRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return diag.FromErr(resourceRancher2ClusterReadImpl(ctx, d, meta))
+}
+
+func resourceRancher2ClusterReadImpl(ctx context.Context, d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Refreshing Cluster ID %s", d.Id())
 
 	client, err := meta.(*Config).ManagementClient()
@@ -258,7 +263,7 @@ func resourceRancher2ClusterRead(d *schema.ResourceData, meta interface{}) error
 	return flattenCluster(d, cluster, clusterRegistrationToken, kubeConfig, defaultProjectID, systemProjectID, monitoringInput)
 }
 
-func resourceRancher2ClusterUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Cluster ID %s", d.Id())
 
 	client, err := meta.(*Config).ManagementClient()
@@ -376,7 +381,7 @@ func resourceRancher2ClusterUpdate(d *schema.ResourceData, meta interface{}) err
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for cluster (%s) to be updated: %s", newCluster.ID, waitErr)
 	}
@@ -444,10 +449,10 @@ func resourceRancher2ClusterUpdate(d *schema.ResourceData, meta interface{}) err
 
 	d.SetId(newCluster.ID)
 
-	return resourceRancher2ClusterRead(d, meta)
+	return resourceRancher2ClusterRead(ctx, d, meta)
 }
 
-func resourceRancher2ClusterDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Cluster ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -482,7 +487,7 @@ func resourceRancher2ClusterDelete(d *schema.ResourceData, meta interface{}) err
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for cluster (%s) to be removed: %s", id, waitErr)
@@ -575,7 +580,7 @@ func createClusterRegistrationToken(client *managementClient.Client, clusterID s
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return nil, fmt.Errorf("[ERROR] waiting for cluster registration token (%s) to be created: %s", newRegToken.ID, waitErr)
 	}

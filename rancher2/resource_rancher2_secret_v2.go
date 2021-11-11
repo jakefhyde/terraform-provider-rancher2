@@ -6,23 +6,24 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rancher/norman/types"
 )
 
 func resourceRancher2SecretV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2SecretV2Create,
-		Read:   resourceRancher2SecretV2Read,
-		Update: resourceRancher2SecretV2Update,
-		Delete: resourceRancher2SecretV2Delete,
+		CreateContext: resourceRancher2SecretV2Create,
+		ReadContext:   resourceRancher2SecretV2Read,
+		UpdateContext: resourceRancher2SecretV2Update,
+		DeleteContext: resourceRancher2SecretV2Delete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2SecretV2Import,
+			StateContext: resourceRancher2SecretV2Import,
 		},
 		Schema: secretV2Fields(),
-		CustomizeDiff: customdiff.ForceNewIf("immutable", func(d *schema.ResourceDiff, m interface{}) bool {
+		CustomizeDiff: customdiff.ForceNewIf("immutable", func(ctx context.Context, d *schema.ResourceDiff, m interface{}) bool {
 			if d.HasChange("immutable") {
 				return !d.Get("immutable").(bool)
 			}
@@ -36,7 +37,7 @@ func resourceRancher2SecretV2() *schema.Resource {
 	}
 }
 
-func resourceRancher2SecretV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2SecretV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID := d.Get("cluster_id").(string)
 	name := d.Get("name").(string)
 	secret := expandSecretV2(d)
@@ -56,14 +57,14 @@ func resourceRancher2SecretV2Create(d *schema.ResourceData, meta interface{}) er
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for secret (%s) to be active: %s", newSecret.ID, waitErr)
 	}
-	return resourceRancher2SecretV2Read(d, meta)
+	return resourceRancher2SecretV2Read(ctx, d, meta)
 }
 
-func resourceRancher2SecretV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2SecretV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID, rancherID := splitID(d.Id())
 	log.Printf("[INFO] Refreshing Secret V2 %s at Cluster ID %s", rancherID, clusterID)
 
@@ -79,7 +80,7 @@ func resourceRancher2SecretV2Read(d *schema.ResourceData, meta interface{}) erro
 	return flattenSecretV2(d, secret)
 }
 
-func resourceRancher2SecretV2Update(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2SecretV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID, rancherID := splitID(d.Id())
 	secret := expandSecretV2(d)
 	log.Printf("[INFO] Updating Secret V2 %s at Cluster ID %s", rancherID, clusterID)
@@ -97,14 +98,14 @@ func resourceRancher2SecretV2Update(d *schema.ResourceData, meta interface{}) er
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for secret (%s) to be active: %s", newSecret.ID, waitErr)
 	}
-	return resourceRancher2SecretV2Read(d, meta)
+	return resourceRancher2SecretV2Read(ctx, d, meta)
 }
 
-func resourceRancher2SecretV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2SecretV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID := d.Get("cluster_id").(string)
 	name := d.Get("name").(string)
 	log.Printf("[INFO] Deleting Secret V2 %s", name)
@@ -129,7 +130,7 @@ func resourceRancher2SecretV2Delete(d *schema.ResourceData, meta interface{}) er
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for secret (%s) to be active: %s", secret.ID, waitErr)
 	}

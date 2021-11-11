@@ -1,11 +1,9 @@
 package rancher2
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccRancher2AppDataSource(t *testing.T) {
@@ -17,8 +15,8 @@ data "` + testAccRancher2AppType + `" "foo" {
 `
 	name := "data." + testAccRancher2AppType + ".foo"
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckRancher2AppDataSourceConfig,
@@ -32,11 +30,4 @@ data "` + testAccRancher2AppType + `" "foo" {
 			},
 		},
 	})
-}
-
-func testAccRancher2CheckClusterID() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		return fmt.Errorf("testAccRancher2ClusterID %s", testAccRancher2ClusterID)
-
-	}
 }

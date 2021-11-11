@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
@@ -56,7 +56,7 @@ func TestAccRancher2Token_basic(t *testing.T) {
 	var token *managementClient.Token
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2TokenDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -94,7 +94,7 @@ func TestAccRancher2Token_disappears(t *testing.T) {
 	var token *managementClient.Token
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2TokenDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -116,7 +116,7 @@ func TestAccRancher2TokenScoped_basic(t *testing.T) {
 	testAccRancher2TokenClusterUpdateConfig = testAccCheckRancher2ClusterSyncTestacc + testAccRancher2TokenClusterUpdate
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2TokenDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -157,7 +157,7 @@ func TestAccRancher2TokenScoped_disappears(t *testing.T) {
 	var token *managementClient.Token
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2TokenDestroy,
 		Steps: []resource.TestStep{
 			{

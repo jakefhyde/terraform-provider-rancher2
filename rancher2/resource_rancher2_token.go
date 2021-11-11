@@ -1,19 +1,21 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceRancher2Token() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2TokenCreate,
-		Read:   resourceRancher2TokenRead,
-		Update: resourceRancher2TokenUpdate,
-		Delete: resourceRancher2TokenDelete,
+		CreateContext: resourceRancher2TokenCreate,
+		ReadContext:   resourceRancher2TokenRead,
+		UpdateContext: resourceRancher2TokenUpdate,
+		DeleteContext: resourceRancher2TokenDelete,
 
 		Schema: tokenFields(),
 		Timeouts: &schema.ResourceTimeout{
@@ -24,7 +26,7 @@ func resourceRancher2Token() *schema.Resource {
 	}
 }
 
-func resourceRancher2TokenCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2TokenCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Creating Token")
 	patch, err := meta.(*Config).IsRancherVersionGreaterThanOrEqualAndLessThan(rancher2TokeTTLMinutesVersion, rancher2TokeTTLMilisVersion)
 	if err != nil {
@@ -50,10 +52,10 @@ func resourceRancher2TokenCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	return resourceRancher2TokenRead(d, meta)
+	return resourceRancher2TokenRead(ctx, d, meta)
 }
 
-func resourceRancher2TokenRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2TokenRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Token ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -87,11 +89,11 @@ func resourceRancher2TokenRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceRancher2TokenUpdate(d *schema.ResourceData, meta interface{}) error {
-	return resourceRancher2TokenRead(d, meta)
+func resourceRancher2TokenUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceRancher2TokenRead(ctx, d, meta)
 }
 
-func resourceRancher2TokenDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2TokenDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Token ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()

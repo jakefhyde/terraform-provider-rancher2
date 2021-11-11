@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
@@ -36,7 +36,7 @@ func init() {
 		ClusterID:               "cluster-test",
 		Name:                    "test",
 		DeleteNotReadyAfterSecs: 0,
-		DrainBeforeDelete:       true,
+		DrainBeforeDeleteContext:       true,
 		HostnamePrefix:          "terraform-test",
 		NodeTaints:              testNodePoolNodeTaintsConf,
 		NodeTemplateID:          "node-test",

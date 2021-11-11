@@ -1,21 +1,23 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceRancher2GlobalRole() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2GlobalRoleCreate,
-		Read:   resourceRancher2GlobalRoleRead,
-		Update: resourceRancher2GlobalRoleUpdate,
-		Delete: resourceRancher2GlobalRoleDelete,
+		CreateContext: resourceRancher2GlobalRoleCreate,
+		ReadContext:   resourceRancher2GlobalRoleRead,
+		UpdateContext: resourceRancher2GlobalRoleUpdate,
+		DeleteContext: resourceRancher2GlobalRoleDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2GlobalRoleImport,
+			StateContext: resourceRancher2GlobalRoleImport,
 		},
 
 		Schema: globalRoleFields(),
@@ -27,7 +29,7 @@ func resourceRancher2GlobalRole() *schema.Resource {
 	}
 }
 
-func resourceRancher2GlobalRoleCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2GlobalRoleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
 		return err
@@ -44,10 +46,10 @@ func resourceRancher2GlobalRoleCreate(d *schema.ResourceData, meta interface{}) 
 
 	d.SetId(newGlobalRole.ID)
 
-	return resourceRancher2GlobalRoleRead(d, meta)
+	return resourceRancher2GlobalRoleRead(ctx, d, meta)
 }
 
-func resourceRancher2GlobalRoleRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2GlobalRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing global role ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -72,7 +74,7 @@ func resourceRancher2GlobalRoleRead(d *schema.ResourceData, meta interface{}) er
 	return nil
 }
 
-func resourceRancher2GlobalRoleUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2GlobalRoleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating global role ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -98,10 +100,10 @@ func resourceRancher2GlobalRoleUpdate(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 
-	return resourceRancher2GlobalRoleRead(d, meta)
+	return resourceRancher2GlobalRoleRead(ctx, d, meta)
 }
 
-func resourceRancher2GlobalRoleDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2GlobalRoleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting global role ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()

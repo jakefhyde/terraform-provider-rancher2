@@ -1476,7 +1476,8 @@ The following arguments are supported:
 
 The following arguments are supported:
 
-* `name` - (Required) The EKS node group name to import (string)
+* `name` - (Required) The EKS node group name to import (
+	"context"string)
 * `desired_size` - (Optional) The EKS node group desired size. Default: `2` (int)
 * `disk_size` - (Optional) The EKS node group disk size (Gb). Default: `20` (int)
 * `ec2_ssh_key` - (Optional) The EKS node group ssh key (string)

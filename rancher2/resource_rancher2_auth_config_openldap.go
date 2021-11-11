@@ -1,26 +1,28 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	norman "github.com/rancher/norman/types"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2AuthConfigOpenLdap() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2AuthConfigOpenLdapCreate,
-		Read:   resourceRancher2AuthConfigOpenLdapRead,
-		Update: resourceRancher2AuthConfigOpenLdapUpdate,
-		Delete: resourceRancher2AuthConfigOpenLdapDelete,
+		CreateContext: resourceRancher2AuthConfigOpenLdapCreate,
+		ReadContext:   resourceRancher2AuthConfigOpenLdapRead,
+		UpdateContext: resourceRancher2AuthConfigOpenLdapUpdate,
+		DeleteContext: resourceRancher2AuthConfigOpenLdapDelete,
 
 		Schema: authConfigOpenLdapFields(),
 	}
 }
 
-func resourceRancher2AuthConfigOpenLdapCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigOpenLdapCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
 		return err
@@ -74,10 +76,10 @@ func resourceRancher2AuthConfigOpenLdapCreate(d *schema.ResourceData, meta inter
 		}
 	}
 
-	return resourceRancher2AuthConfigOpenLdapRead(d, meta)
+	return resourceRancher2AuthConfigOpenLdapRead(ctx, d, meta)
 }
 
-func resourceRancher2AuthConfigOpenLdapRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigOpenLdapRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Auth Config %s", AuthConfigOpenLdapName)
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -107,13 +109,13 @@ func resourceRancher2AuthConfigOpenLdapRead(d *schema.ResourceData, meta interfa
 	return nil
 }
 
-func resourceRancher2AuthConfigOpenLdapUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigOpenLdapUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Auth Config %s", AuthConfigOpenLdapName)
 
-	return resourceRancher2AuthConfigOpenLdapCreate(d, meta)
+	return resourceRancher2AuthConfigOpenLdapCreate(ctx, d, meta)
 }
 
-func resourceRancher2AuthConfigOpenLdapDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigOpenLdapDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Disabling Auth Config %s", AuthConfigOpenLdapName)
 
 	client, err := meta.(*Config).ManagementClient()

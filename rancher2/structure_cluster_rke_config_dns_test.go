@@ -100,7 +100,7 @@ func init() {
 		},
 	}
 	testDeploymentStrategyConf = &managementClient.DeploymentStrategy{
-		RollingUpdate: testRollingUpdateDeploymentConf,
+		RollingUpdateContext: testRollingUpdateDeploymentConf,
 		Strategy:      "strategy",
 	}
 	testDeploymentStrategyInterface = []interface{}{

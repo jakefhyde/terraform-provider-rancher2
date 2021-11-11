@@ -6,8 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 const (
@@ -17,20 +16,18 @@ const (
 )
 
 var (
-	testAccProviders                           map[string]terraform.ResourceProvider
+	testAccProviders                           map[string]func() (*schema.Provider, error)
 	testAccProvider                            *schema.Provider
 	testAccRancher2ClusterID                   string
-	testAccRancher2AdminPass                   string
 	testAccRancher2ClusterRKEK8SDefaultVersion string
 )
 
 func init() {
-	testAccProvider = Provider().(*schema.Provider)
-	testAccProviders = map[string]terraform.ResourceProvider{
-		"rancher2": testAccProvider,
+	testAccProvider = Provider()
+	testAccProviders = map[string]func() (*schema.Provider, error) {
+		"rancher2": func() (*schema.Provider, error) { return testAccProvider, nil },
 	}
 	testAccRancher2ClusterID = testAccRancher2DefaultClusterID
-	testAccRancher2AdminPass = testAccRancher2DefaultAdminPass
 	err := testAccCheck()
 	if err != nil {
 		log.Fatalf("%v", err)
@@ -38,13 +35,9 @@ func init() {
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().(*schema.Provider).InternalValidate(); err != nil {
+	if err := Provider().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-}
-
-func TestProvider_impl(t *testing.T) {
-	var _ terraform.ResourceProvider = Provider()
 }
 
 func testAccPreCheck(t *testing.T) {
@@ -61,7 +54,6 @@ func testAccCheck() error {
 		accessKey := os.Getenv("RANCHER_ACCESS_KEY")
 		secretKey := os.Getenv("RANCHER_SECRET_KEY")
 		caCerts := os.Getenv("RANCHER_CA_CERTS")
-		adminPass := os.Getenv("RANCHER_ADMIN_PASS")
 		insecure := false
 		if os.Getenv("RANCHER_INSECURE") == "true" {
 			insecure = true
@@ -85,10 +77,6 @@ func testAccCheck() error {
 			CACerts:   caCerts,
 			Insecure:  insecure,
 			Bootstrap: bootstrap,
-		}
-
-		if len(adminPass) > 0 {
-			testAccRancher2AdminPass = adminPass
 		}
 
 		if len(tokenKey) > 5 {

@@ -60,7 +60,7 @@ func init() {
 			},
 			Quantity:      &quantity,
 			Paused:        true,
-			RollingUpdate: testClusterV2RKEConfigMachinePoolRollingUpdateConf,
+			RollingUpdateContext: testClusterV2RKEConfigMachinePoolRollingUpdateConf,
 			WorkerRole:    true,
 		},
 	}

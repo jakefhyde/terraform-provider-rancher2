@@ -1,25 +1,27 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2AuthConfigADFS() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2AuthConfigADFSCreate,
-		Read:   resourceRancher2AuthConfigADFSRead,
-		Update: resourceRancher2AuthConfigADFSUpdate,
-		Delete: resourceRancher2AuthConfigADFSDelete,
+		CreateContext: resourceRancher2AuthConfigADFSCreate,
+		ReadContext:   resourceRancher2AuthConfigADFSRead,
+		UpdateContext: resourceRancher2AuthConfigADFSUpdate,
+		DeleteContext: resourceRancher2AuthConfigADFSDelete,
 
 		Schema: authConfigADFSFields(),
 	}
 }
 
-func resourceRancher2AuthConfigADFSCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigADFSCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
 		return err
@@ -52,10 +54,10 @@ func resourceRancher2AuthConfigADFSCreate(d *schema.ResourceData, meta interface
 		return fmt.Errorf("[ERROR] Updating Auth Config %s: %s", AuthConfigADFSName, err)
 	}
 
-	return resourceRancher2AuthConfigADFSRead(d, meta)
+	return resourceRancher2AuthConfigADFSRead(ctx, d, meta)
 }
 
-func resourceRancher2AuthConfigADFSRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigADFSRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Auth Config %s", AuthConfigADFSName)
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -85,13 +87,13 @@ func resourceRancher2AuthConfigADFSRead(d *schema.ResourceData, meta interface{}
 	return nil
 }
 
-func resourceRancher2AuthConfigADFSUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigADFSUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Auth Config %s", AuthConfigADFSName)
 
 	return resourceRancher2AuthConfigADFSCreate(d, meta)
 }
 
-func resourceRancher2AuthConfigADFSDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigADFSDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Disabling Auth Config %s", AuthConfigADFSName)
 
 	client, err := meta.(*Config).ManagementClient()

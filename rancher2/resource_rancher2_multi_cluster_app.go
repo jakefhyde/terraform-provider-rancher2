@@ -1,23 +1,25 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2MultiClusterApp() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2MultiClusterAppCreate,
-		Read:   resourceRancher2MultiClusterAppRead,
-		Update: resourceRancher2MultiClusterAppUpdate,
-		Delete: resourceRancher2MultiClusterAppDelete,
+		CreateContext: resourceRancher2MultiClusterAppCreate,
+		ReadContext:   resourceRancher2MultiClusterAppRead,
+		UpdateContext: resourceRancher2MultiClusterAppUpdate,
+		DeleteContext: resourceRancher2MultiClusterAppDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2MultiClusterAppImport,
+			StateContext: resourceRancher2MultiClusterAppImport,
 		},
 
 		Schema: multiClusterAppFields(),
@@ -29,7 +31,7 @@ func resourceRancher2MultiClusterApp() *schema.Resource {
 	}
 }
 
-func resourceRancher2MultiClusterAppCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2MultiClusterAppCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	name := d.Get("name").(string)
 
 	err := resourceRancher2AppGetVersion(d, meta)
@@ -65,16 +67,16 @@ func resourceRancher2MultiClusterAppCreate(d *schema.ResourceData, meta interfac
 			Delay:      1 * time.Second,
 			MinTimeout: 3 * time.Second,
 		}
-		_, waitErr := stateConf.WaitForState()
+		_, waitErr := stateConf.WaitForStateContext(ctx)
 		if waitErr != nil {
 			return fmt.Errorf("[ERROR] waiting for multi cluster app (%s) to be created: %s", newMultiClusterApp.ID, waitErr)
 		}
 	}
 
-	return resourceRancher2MultiClusterAppRead(d, meta)
+	return resourceRancher2MultiClusterAppRead(ctx, d, meta)
 }
 
-func resourceRancher2MultiClusterAppRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2MultiClusterAppRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	id := d.Id()
 
 	log.Printf("[INFO] Refreshing multi cluster app ID %s", id)
@@ -102,7 +104,7 @@ func resourceRancher2MultiClusterAppRead(d *schema.ResourceData, meta interface{
 	return flattenMultiClusterApp(d, multiClusterApp, templateVersion.ExternalID)
 }
 
-func resourceRancher2MultiClusterAppUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2MultiClusterAppUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	id := d.Id()
 
 	client, err := meta.(*Config).ManagementClient()
@@ -186,16 +188,16 @@ func resourceRancher2MultiClusterAppUpdate(d *schema.ResourceData, meta interfac
 			Delay:      1 * time.Second,
 			MinTimeout: 3 * time.Second,
 		}
-		_, waitErr := stateConf.WaitForState()
+		_, waitErr := stateConf.WaitForStateContext(ctx)
 		if waitErr != nil {
 			return fmt.Errorf("[ERROR] waiting for multi cluster app (%s) to be created: %s", id, waitErr)
 		}
 	}
 
-	return resourceRancher2MultiClusterAppRead(d, meta)
+	return resourceRancher2MultiClusterAppRead(ctx, d, meta)
 }
 
-func resourceRancher2MultiClusterAppDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2MultiClusterAppDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	id := d.Id()
 
 	log.Printf("[INFO] Deleting multi cluster app ID %s", id)
@@ -229,7 +231,7 @@ func resourceRancher2MultiClusterAppDelete(d *schema.ResourceData, meta interfac
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for multi cluster app (%s) to be removed: %s", id, waitErr)
@@ -250,7 +252,7 @@ func resourceRancher2MultiClusterAppDelete(d *schema.ResourceData, meta interfac
 			Delay:      1 * time.Second,
 			MinTimeout: 3 * time.Second,
 		}
-		stateConf.WaitForState()
+		stateConf.WaitForStateContext(ctx)
 	}
 	time.Sleep(5 * time.Second)
 

@@ -1,23 +1,25 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2GlobalDNS() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2GlobalDNSCreate,
-		Read:   resourceRancher2GlobalDNSRead,
-		Update: resourceRancher2GlobalDNSUpdate,
-		Delete: resourceRancher2GlobalDNSDelete,
+		CreateContext: resourceRancher2GlobalDNSCreate,
+		ReadContext:   resourceRancher2GlobalDNSRead,
+		UpdateContext: resourceRancher2GlobalDNSUpdate,
+		DeleteContext: resourceRancher2GlobalDNSDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2GlobalDNSImport,
+			StateContext: resourceRancher2GlobalDNSImport,
 		},
 
 		Schema: GlobalDNSFields(),
@@ -29,7 +31,7 @@ func resourceRancher2GlobalDNS() *schema.Resource {
 	}
 }
 
-func resourceRancher2GlobalDNSCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2GlobalDNSCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	globalDNS, err := expandGlobalDNS(d)
 	if err != nil {
 		return err
@@ -55,7 +57,7 @@ func resourceRancher2GlobalDNSCreate(d *schema.ResourceData, meta interface{}) e
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for global DNS (%s) to be created: %s", newglobalDNS.ID, waitErr)
@@ -66,10 +68,14 @@ func resourceRancher2GlobalDNSCreate(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 
-	return resourceRancher2GlobalDNSRead(d, meta)
+	return resourceRancher2GlobalDNSRead(ctx, d, meta)
 }
 
-func resourceRancher2GlobalDNSRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2GlobalDNSRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return diag.FromErr(resourceRancher2GlobalDNSReadImpl(ctx, d, meta))
+}
+
+func resourceRancher2GlobalDNSReadImpl(ctx context.Context, d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Refreshing Global DNS ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -94,7 +100,7 @@ func resourceRancher2GlobalDNSRead(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
-func resourceRancher2GlobalDNSUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2GlobalDNSUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Global DNS ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -131,7 +137,7 @@ func resourceRancher2GlobalDNSUpdate(d *schema.ResourceData, meta interface{}) e
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for global DNS (%s) to be updated: %s", newglobalDNS.ID, waitErr)
@@ -188,10 +194,10 @@ func resourceRancher2GlobalDNSUpdate(d *schema.ResourceData, meta interface{}) e
 		}
 	}
 
-	return resourceRancher2GlobalDNSRead(d, meta)
+	return resourceRancher2GlobalDNSRead(ctx, d, meta)
 }
 
-func resourceRancher2GlobalDNSDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2GlobalDNSDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Global DNS ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -225,7 +231,7 @@ func resourceRancher2GlobalDNSDelete(d *schema.ResourceData, meta interface{}) e
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for global DNS (%s) to be removed: %s", id, waitErr)

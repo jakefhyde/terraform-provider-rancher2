@@ -1,21 +1,23 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceRancher2RoleTemplate() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2RoleTemplateCreate,
-		Read:   resourceRancher2RoleTemplateRead,
-		Update: resourceRancher2RoleTemplateUpdate,
-		Delete: resourceRancher2RoleTemplateDelete,
+		CreateContext: resourceRancher2RoleTemplateCreate,
+		ReadContext:   resourceRancher2RoleTemplateRead,
+		UpdateContext: resourceRancher2RoleTemplateUpdate,
+		DeleteContext: resourceRancher2RoleTemplateDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2RoleTemplateImport,
+			StateContext: resourceRancher2RoleTemplateImport,
 		},
 
 		Schema: roleTemplateFields(),
@@ -27,7 +29,7 @@ func resourceRancher2RoleTemplate() *schema.Resource {
 	}
 }
 
-func resourceRancher2RoleTemplateCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2RoleTemplateCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
 		return err
@@ -44,10 +46,10 @@ func resourceRancher2RoleTemplateCreate(d *schema.ResourceData, meta interface{}
 
 	d.SetId(newRoleTemplate.ID)
 
-	return resourceRancher2RoleTemplateRead(d, meta)
+	return resourceRancher2RoleTemplateRead(ctx, d, meta)
 }
 
-func resourceRancher2RoleTemplateRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2RoleTemplateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing role template ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -72,7 +74,7 @@ func resourceRancher2RoleTemplateRead(d *schema.ResourceData, meta interface{}) 
 	return nil
 }
 
-func resourceRancher2RoleTemplateUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2RoleTemplateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating role template ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -112,10 +114,10 @@ func resourceRancher2RoleTemplateUpdate(d *schema.ResourceData, meta interface{}
 		return err
 	}
 
-	return resourceRancher2RoleTemplateRead(d, meta)
+	return resourceRancher2RoleTemplateRead(ctx, d, meta)
 }
 
-func resourceRancher2RoleTemplateDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2RoleTemplateDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting role template ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()

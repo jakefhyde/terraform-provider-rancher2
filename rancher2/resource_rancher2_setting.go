@@ -1,29 +1,31 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2Setting() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2SettingCreate,
-		Read:   resourceRancher2SettingRead,
-		Update: resourceRancher2SettingUpdate,
-		Delete: resourceRancher2SettingDelete,
+		CreateContext: resourceRancher2SettingCreate,
+		ReadContext:   resourceRancher2SettingRead,
+		UpdateContext: resourceRancher2SettingUpdate,
+		DeleteContext: resourceRancher2SettingDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2SettingImport,
+			StateContext: resourceRancher2SettingImport,
 		},
 		Schema: settingFields(),
 	}
 }
 
-func resourceRancher2SettingCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2SettingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
 		return err
@@ -63,16 +65,16 @@ func resourceRancher2SettingCreate(d *schema.ResourceData, meta interface{}) err
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for setting (%s) to be created: %s", newSetting.ID, waitErr)
 	}
 
-	return resourceRancher2SettingRead(d, meta)
+	return resourceRancher2SettingRead(ctx, d, meta)
 }
 
-func resourceRancher2SettingRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2SettingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	name := d.Get("name").(string)
 	log.Printf("[INFO] Refreshing Rancher2 Setting ID %s", d.Id())
 
@@ -99,7 +101,7 @@ func resourceRancher2SettingRead(d *schema.ResourceData, meta interface{}) error
 	return nil
 }
 
-func resourceRancher2SettingUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2SettingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Setting ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -130,16 +132,16 @@ func resourceRancher2SettingUpdate(d *schema.ResourceData, meta interface{}) err
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for setting (%s) to be updated: %s", newSetting.ID, waitErr)
 	}
 
-	return resourceRancher2SettingRead(d, meta)
+	return resourceRancher2SettingRead(ctx, d, meta)
 }
 
-func resourceRancher2SettingDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2SettingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Setting ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -175,7 +177,7 @@ func resourceRancher2SettingDelete(d *schema.ResourceData, meta interface{}) err
 			MinTimeout: 3 * time.Second,
 		}
 
-		_, waitErr := stateConf.WaitForState()
+		_, waitErr := stateConf.WaitForStateContext(ctx)
 		if waitErr != nil {
 			return fmt.Errorf(
 				"[ERROR] waiting for setting (%s) to be removed: %s", id, waitErr)

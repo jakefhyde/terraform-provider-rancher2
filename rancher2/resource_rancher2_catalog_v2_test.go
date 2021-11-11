@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const testAccRancher2CatalogV2Type = "rancher2_catalog_v2"
@@ -44,7 +44,7 @@ func TestAccRancher2CatalogV2_basic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2CatalogV2Destroy,
 		Steps: []resource.TestStep{
 			{
@@ -83,7 +83,7 @@ func TestAccRancher2CatalogV2_disappears(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2CatalogV2Destroy,
 		Steps: []resource.TestStep{
 			{
@@ -115,7 +115,7 @@ func testAccRancher2CatalogV2Disappears(cat *ClusterRepo) resource.TestCheckFunc
 			}
 			err = deleteCatalogV2(testAccProvider.Meta().(*Config), clusterID, catalog)
 			if err != nil {
-				return fmt.Errorf("testAccRancher2CatalogV2Disappears-delete: %v", err)
+				return fmt.Errorf("testAccRancher2CatalogV2Disappears-DeleteContext: %v", err)
 			}
 			stateConf := &resource.StateChangeConf{
 				Pending:    []string{},
@@ -125,7 +125,7 @@ func testAccRancher2CatalogV2Disappears(cat *ClusterRepo) resource.TestCheckFunc
 				Delay:      1 * time.Second,
 				MinTimeout: 3 * time.Second,
 			}
-			_, waitErr := stateConf.WaitForState()
+			_, waitErr := stateConf.WaitForStateContext(ctx)
 			if waitErr != nil {
 				return fmt.Errorf("[ERROR] waiting for catalog (%s) to be deleted: %s", catalog.ID, waitErr)
 			}

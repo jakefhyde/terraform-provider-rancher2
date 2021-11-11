@@ -7,23 +7,24 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	norman "github.com/rancher/norman/types"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2ClusterV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2ClusterV2Create,
-		Read:   resourceRancher2ClusterV2Read,
-		Update: resourceRancher2ClusterV2Update,
-		Delete: resourceRancher2ClusterV2Delete,
+		CreateContext: resourceRancher2ClusterV2Create,
+		ReadContext:   resourceRancher2ClusterV2Read,
+		UpdateContext: resourceRancher2ClusterV2Update,
+		DeleteContext: resourceRancher2ClusterV2Delete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2ClusterV2Import,
+			StateContext: resourceRancher2ClusterV2Import,
 		},
 		Schema: clusterV2Fields(),
-		CustomizeDiff: func(d *schema.ResourceDiff, i interface{}) error {
+		CustomizeDiff: func(ctx context.Context, d *schema.ResourceDiff, i interface{}) error {
 			if d.HasChange("rke_config") {
 				oldObj, newObj := d.GetChange("rke_config")
 				//return fmt.Errorf("\n%#v\n%#v\n", oldObj, newObj)
@@ -64,7 +65,7 @@ func resourceRancher2ClusterV2() *schema.Resource {
 	}
 }
 
-func resourceRancher2ClusterV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	name := d.Get("name").(string)
 	cluster := expandClusterV2(d)
 
@@ -88,10 +89,14 @@ func resourceRancher2ClusterV2Create(d *schema.ResourceData, meta interface{}) e
 		}
 	}
 
-	return resourceRancher2ClusterV2Read(d, meta)
+	return resourceRancher2ClusterV2Read(ctx, d, meta)
 }
 
-func resourceRancher2ClusterV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return diag.FromErr(resourceRancher2ClusterV2ReadImpl(ctx, d, meta))
+}
+
+func resourceRancher2ClusterV2ReadImpl(ctx context.Context, d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Refreshing Cluster V2 %s", d.Id())
 
 	cluster, err := getClusterV2ByID(meta.(*Config), d.Id())
@@ -111,7 +116,7 @@ func resourceRancher2ClusterV2Read(d *schema.ResourceData, meta interface{}) err
 	return flattenClusterV2(d, cluster)
 }
 
-func resourceRancher2ClusterV2Update(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cluster := expandClusterV2(d)
 	log.Printf("[INFO] Updating Cluster V2 %s", d.Id())
 
@@ -126,10 +131,10 @@ func resourceRancher2ClusterV2Update(d *schema.ResourceData, meta interface{}) e
 			return err
 		}
 	}
-	return resourceRancher2ClusterV2Read(d, meta)
+	return resourceRancher2ClusterV2Read(ctx, d, meta)
 }
 
-func resourceRancher2ClusterV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	name := d.Get("name").(string)
 	log.Printf("[INFO] Deleting Cluster V2 %s", name)
 
@@ -152,7 +157,7 @@ func resourceRancher2ClusterV2Delete(d *schema.ResourceData, meta interface{}) e
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for cluster (%s) to be removed: %s", cluster.ID, waitErr)
 	}

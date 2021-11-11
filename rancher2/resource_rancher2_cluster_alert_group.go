@@ -1,23 +1,25 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2ClusterAlertGroup() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2ClusterAlertGroupCreate,
-		Read:   resourceRancher2ClusterAlertGroupRead,
-		Update: resourceRancher2ClusterAlertGroupUpdate,
-		Delete: resourceRancher2ClusterAlertGroupDelete,
+		CreateContext: resourceRancher2ClusterAlertGroupCreate,
+		ReadContext:   resourceRancher2ClusterAlertGroupRead,
+		UpdateContext: resourceRancher2ClusterAlertGroupUpdate,
+		DeleteContext: resourceRancher2ClusterAlertGroupDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2ClusterAlertGroupImport,
+			StateContext: resourceRancher2ClusterAlertGroupImport,
 		},
 		Schema: clusterAlertGroupFields(),
 		Timeouts: &schema.ResourceTimeout{
@@ -28,7 +30,7 @@ func resourceRancher2ClusterAlertGroup() *schema.Resource {
 	}
 }
 
-func resourceRancher2ClusterAlertGroupCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterAlertGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	err := resourceRancher2ClusterAlertGroupRecients(d, meta)
 	if err != nil {
 		return err
@@ -57,15 +59,19 @@ func resourceRancher2ClusterAlertGroupCreate(d *schema.ResourceData, meta interf
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for cluster alert group (%s) to be created: %s", newClusterAlertGroup.ID, waitErr)
 	}
 
-	return resourceRancher2ClusterAlertGroupRead(d, meta)
+	return resourceRancher2ClusterAlertGroupRead(ctx, d, meta)
 }
 
-func resourceRancher2ClusterAlertGroupRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterAlertGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return diag.FromErr(resourceRancher2ClusterAlertGroupReadImpl(ctx, d, meta))
+}
+
+func resourceRancher2ClusterAlertGroupReadImpl(ctx context.Context, d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Refreshing Cluster Alert Group ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -84,7 +90,7 @@ func resourceRancher2ClusterAlertGroupRead(d *schema.ResourceData, meta interfac
 	return flattenClusterAlertGroup(d, clusterAlertGroup)
 }
 
-func resourceRancher2ClusterAlertGroupUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterAlertGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Cluster Alert Group ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -128,16 +134,16 @@ func resourceRancher2ClusterAlertGroupUpdate(d *schema.ResourceData, meta interf
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for cluster alert group (%s) to be updated: %s", newClusterAlertGroup.ID, waitErr)
 	}
 
-	return resourceRancher2ClusterAlertGroupRead(d, meta)
+	return resourceRancher2ClusterAlertGroupRead(ctx, d, meta)
 }
 
-func resourceRancher2ClusterAlertGroupDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ClusterAlertGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Cluster Alert Group ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -171,7 +177,7 @@ func resourceRancher2ClusterAlertGroupDelete(d *schema.ResourceData, meta interf
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for cluster alert group (%s) to be removed: %s", id, waitErr)

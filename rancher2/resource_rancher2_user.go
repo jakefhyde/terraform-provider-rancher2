@@ -1,23 +1,25 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2User() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2UserCreate,
-		Read:   resourceRancher2UserRead,
-		Update: resourceRancher2UserUpdate,
-		Delete: resourceRancher2UserDelete,
+		CreateContext: resourceRancher2UserCreate,
+		ReadContext:   resourceRancher2UserRead,
+		UpdateContext: resourceRancher2UserUpdate,
+		DeleteContext: resourceRancher2UserDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2UserImport,
+			StateContext: resourceRancher2UserImport,
 		},
 
 		Schema: userFields(),
@@ -29,7 +31,7 @@ func resourceRancher2User() *schema.Resource {
 	}
 }
 
-func resourceRancher2UserCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2UserCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
 		return err
@@ -54,16 +56,16 @@ func resourceRancher2UserCreate(d *schema.ResourceData, meta interface{}) error 
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for user (%s) to be created: %s", newUser.ID, waitErr)
 	}
 
-	return resourceRancher2UserRead(d, meta)
+	return resourceRancher2UserRead(ctx, d, meta)
 }
 
-func resourceRancher2UserRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2UserRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing User ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -83,7 +85,7 @@ func resourceRancher2UserRead(d *schema.ResourceData, meta interface{}) error {
 	return flattenUser(d, user)
 }
 
-func resourceRancher2UserUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2UserUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating User ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -121,16 +123,16 @@ func resourceRancher2UserUpdate(d *schema.ResourceData, meta interface{}) error 
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for user (%s) to be updated: %s", newUser.ID, waitErr)
 	}
 
-	return resourceRancher2UserRead(d, meta)
+	return resourceRancher2UserRead(ctx, d, meta)
 }
 
-func resourceRancher2UserDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2UserDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting User ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -164,7 +166,7 @@ func resourceRancher2UserDelete(d *schema.ResourceData, meta interface{}) error 
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for user (%s) to be removed: %s", id, waitErr)

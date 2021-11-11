@@ -1,25 +1,27 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2AuthConfigGithub() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2AuthConfigGithubCreate,
-		Read:   resourceRancher2AuthConfigGithubRead,
-		Update: resourceRancher2AuthConfigGithubUpdate,
-		Delete: resourceRancher2AuthConfigGithubDelete,
+		CreateContext: resourceRancher2AuthConfigGithubCreate,
+		ReadContext:   resourceRancher2AuthConfigGithubRead,
+		UpdateContext: resourceRancher2AuthConfigGithubUpdate,
+		DeleteContext: resourceRancher2AuthConfigGithubDelete,
 
 		Schema: authConfigGithubFields(),
 	}
 }
 
-func resourceRancher2AuthConfigGithubCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigGithubCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
 		return err
@@ -52,10 +54,10 @@ func resourceRancher2AuthConfigGithubCreate(d *schema.ResourceData, meta interfa
 		return fmt.Errorf("[ERROR] Updating Auth Config %s: %s", AuthConfigGithubName, err)
 	}
 
-	return resourceRancher2AuthConfigGithubRead(d, meta)
+	return resourceRancher2AuthConfigGithubRead(ctx, d, meta)
 }
 
-func resourceRancher2AuthConfigGithubRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigGithubRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Auth Config %s", AuthConfigGithubName)
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -85,13 +87,13 @@ func resourceRancher2AuthConfigGithubRead(d *schema.ResourceData, meta interface
 	return nil
 }
 
-func resourceRancher2AuthConfigGithubUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigGithubUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Auth Config %s", AuthConfigGithubName)
 
 	return resourceRancher2AuthConfigGithubCreate(d, meta)
 }
 
-func resourceRancher2AuthConfigGithubDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2AuthConfigGithubDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Disabling Auth Config %s", AuthConfigGithubName)
 
 	client, err := meta.(*Config).ManagementClient()

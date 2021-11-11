@@ -1,23 +1,25 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2ProjectAlertGroup() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2ProjectAlertGroupCreate,
-		Read:   resourceRancher2ProjectAlertGroupRead,
-		Update: resourceRancher2ProjectAlertGroupUpdate,
-		Delete: resourceRancher2ProjectAlertGroupDelete,
+		CreateContext: resourceRancher2ProjectAlertGroupCreate,
+		ReadContext:   resourceRancher2ProjectAlertGroupRead,
+		UpdateContext: resourceRancher2ProjectAlertGroupUpdate,
+		DeleteContext: resourceRancher2ProjectAlertGroupDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2ProjectAlertGroupImport,
+			StateContext: resourceRancher2ProjectAlertGroupImport,
 		},
 		Schema: projectAlertGroupFields(),
 		Timeouts: &schema.ResourceTimeout{
@@ -28,7 +30,7 @@ func resourceRancher2ProjectAlertGroup() *schema.Resource {
 	}
 }
 
-func resourceRancher2ProjectAlertGroupCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectAlertGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	err := resourceRancher2ProjectAlertGroupRecients(d, meta)
 	if err != nil {
 		return err
@@ -57,15 +59,15 @@ func resourceRancher2ProjectAlertGroupCreate(d *schema.ResourceData, meta interf
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for project alert group (%s) to be created: %s", newProjectAlertGroup.ID, waitErr)
 	}
 
-	return resourceRancher2ProjectAlertGroupRead(d, meta)
+	return resourceRancher2ProjectAlertGroupRead(ctx, d, meta)
 }
 
-func resourceRancher2ProjectAlertGroupRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectAlertGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Project Alert Group ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -84,7 +86,7 @@ func resourceRancher2ProjectAlertGroupRead(d *schema.ResourceData, meta interfac
 	return flattenProjectAlertGroup(d, projectAlertGroup)
 }
 
-func resourceRancher2ProjectAlertGroupUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectAlertGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Project Alert Group ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -128,16 +130,16 @@ func resourceRancher2ProjectAlertGroupUpdate(d *schema.ResourceData, meta interf
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for project alert group (%s) to be updated: %s", newProjectAlertGroup.ID, waitErr)
 	}
 
-	return resourceRancher2ProjectAlertGroupRead(d, meta)
+	return resourceRancher2ProjectAlertGroupRead(ctx, d, meta)
 }
 
-func resourceRancher2ProjectAlertGroupDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectAlertGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Project Alert Group ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -171,7 +173,7 @@ func resourceRancher2ProjectAlertGroupDelete(d *schema.ResourceData, meta interf
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for project alert group (%s) to be removed: %s", id, waitErr)

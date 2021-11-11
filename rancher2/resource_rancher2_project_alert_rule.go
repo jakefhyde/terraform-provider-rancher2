@@ -1,23 +1,25 @@
 package rancher2
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 )
 
 func resourceRancher2ProjectAlertRule() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2ProjectAlertRuleCreate,
-		Read:   resourceRancher2ProjectAlertRuleRead,
-		Update: resourceRancher2ProjectAlertRuleUpdate,
-		Delete: resourceRancher2ProjectAlertRuleDelete,
+		CreateContext: resourceRancher2ProjectAlertRuleCreate,
+		ReadContext:   resourceRancher2ProjectAlertRuleRead,
+		UpdateContext: resourceRancher2ProjectAlertRuleUpdate,
+		DeleteContext: resourceRancher2ProjectAlertRuleDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2ProjectAlertRuleImport,
+			StateContext: resourceRancher2ProjectAlertRuleImport,
 		},
 		Schema: projectAlertRuleFields(),
 		Timeouts: &schema.ResourceTimeout{
@@ -28,7 +30,7 @@ func resourceRancher2ProjectAlertRule() *schema.Resource {
 	}
 }
 
-func resourceRancher2ProjectAlertRuleCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectAlertRuleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	projectAlertRule := expandProjectAlertRule(d)
 
 	log.Printf("[INFO] Creating Project Alert Rule %s", projectAlertRule.Name)
@@ -53,15 +55,15 @@ func resourceRancher2ProjectAlertRuleCreate(d *schema.ResourceData, meta interfa
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for project alert rule (%s) to be created: %s", newProjectAlertRule.ID, waitErr)
 	}
 
-	return resourceRancher2ProjectAlertRuleRead(d, meta)
+	return resourceRancher2ProjectAlertRuleRead(ctx, d, meta)
 }
 
-func resourceRancher2ProjectAlertRuleRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectAlertRuleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Refreshing Project Alert Rule ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -80,7 +82,7 @@ func resourceRancher2ProjectAlertRuleRead(d *schema.ResourceData, meta interface
 	return flattenProjectAlertRule(d, projectAlertRule)
 }
 
-func resourceRancher2ProjectAlertRuleUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectAlertRuleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Updating Project Alert Rule ID %s", d.Id())
 	client, err := meta.(*Config).ManagementClient()
 	if err != nil {
@@ -131,16 +133,16 @@ func resourceRancher2ProjectAlertRuleUpdate(d *schema.ResourceData, meta interfa
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for project alert rule (%s) to be updated: %s", newProjectAlertRule.ID, waitErr)
 	}
 
-	return resourceRancher2ProjectAlertRuleRead(d, meta)
+	return resourceRancher2ProjectAlertRuleRead(ctx, d, meta)
 }
 
-func resourceRancher2ProjectAlertRuleDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2ProjectAlertRuleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Deleting Project Alert Rule ID %s", d.Id())
 	id := d.Id()
 	client, err := meta.(*Config).ManagementClient()
@@ -174,7 +176,7 @@ func resourceRancher2ProjectAlertRuleDelete(d *schema.ResourceData, meta interfa
 		MinTimeout: 3 * time.Second,
 	}
 
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf(
 			"[ERROR] waiting for project alert rule (%s) to be removed: %s", id, waitErr)

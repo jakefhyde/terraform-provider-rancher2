@@ -7,22 +7,23 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rancher/norman/types"
 )
 
 func resourceRancher2StorageClassV2() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRancher2StorageClassV2Create,
-		Read:   resourceRancher2StorageClassV2Read,
-		Update: resourceRancher2StorageClassV2Update,
-		Delete: resourceRancher2StorageClassV2Delete,
+		CreateContext: resourceRancher2StorageClassV2Create,
+		ReadContext:   resourceRancher2StorageClassV2Read,
+		UpdateContext: resourceRancher2StorageClassV2Update,
+		DeleteContext: resourceRancher2StorageClassV2Delete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRancher2StorageClassV2Import,
+			StateContext: resourceRancher2StorageClassV2Import,
 		},
 		Schema: storageClassV2Fields(),
-		CustomizeDiff: func(d *schema.ResourceDiff, i interface{}) error {
+		CustomizeDiff: func(ctx context.Context, d *schema.ResourceDiff, i interface{}) error {
 			if d.HasChange("mount_options") {
 				old, new := d.GetChange("mount_options")
 				oldObj := toArrayStringSorted(old.([]interface{}))
@@ -46,7 +47,7 @@ func resourceRancher2StorageClassV2() *schema.Resource {
 	}
 }
 
-func resourceRancher2StorageClassV2Create(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2StorageClassV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID := d.Get("cluster_id").(string)
 	name := d.Get("name").(string)
 	storageClass := expandStorageClassV2(d)
@@ -66,14 +67,14 @@ func resourceRancher2StorageClassV2Create(d *schema.ResourceData, meta interface
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for storageClass (%s) to be active: %s", newStorageClass.ID, waitErr)
 	}
-	return resourceRancher2StorageClassV2Read(d, meta)
+	return resourceRancher2StorageClassV2Read(ctx, d, meta)
 }
 
-func resourceRancher2StorageClassV2Read(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2StorageClassV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID, rancherID := splitID(d.Id())
 	log.Printf("[INFO] Refreshing StorageClass V2 %s at Cluster ID %s", rancherID, clusterID)
 
@@ -89,7 +90,7 @@ func resourceRancher2StorageClassV2Read(d *schema.ResourceData, meta interface{}
 	return flattenStorageClassV2(d, storageClass)
 }
 
-func resourceRancher2StorageClassV2Update(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2StorageClassV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID, rancherID := splitID(d.Id())
 	storageClass := expandStorageClassV2(d)
 	log.Printf("[INFO] Updating StorageClass V2 %s at Cluster ID %s", rancherID, clusterID)
@@ -107,14 +108,14 @@ func resourceRancher2StorageClassV2Update(d *schema.ResourceData, meta interface
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for storageClass (%s) to be active: %s", newStorageClass.ID, waitErr)
 	}
-	return resourceRancher2StorageClassV2Read(d, meta)
+	return resourceRancher2StorageClassV2Read(ctx, d, meta)
 }
 
-func resourceRancher2StorageClassV2Delete(d *schema.ResourceData, meta interface{}) error {
+func resourceRancher2StorageClassV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	clusterID := d.Get("cluster_id").(string)
 	name := d.Get("name").(string)
 	log.Printf("[INFO] Deleting StorageClass V2 %s", name)
@@ -139,7 +140,7 @@ func resourceRancher2StorageClassV2Delete(d *schema.ResourceData, meta interface
 		Delay:      1 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	_, waitErr := stateConf.WaitForState()
+	_, waitErr := stateConf.WaitForStateContext(ctx)
 	if waitErr != nil {
 		return fmt.Errorf("[ERROR] waiting for storageClass (%s) to be active: %s", storageClass.ID, waitErr)
 	}

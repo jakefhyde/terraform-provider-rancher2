@@ -42,7 +42,7 @@ func init() {
 		ServiceLBSubnet1Name:        "",
 		ServiceLBSubnet2Name:        "",
 		ServiceSubnetDNSDomainName:  "svcdns",
-		SkipVCNDelete:               false,
+		SkipVCNDeleteContext:               false,
 		TenancyID:                   "tenancy",
 		UserOCID:                    "user",
 		VCNName:                     "",

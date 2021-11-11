@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	clusterClient "github.com/rancher/rancher/pkg/client/generated/cluster/v3"
 )
 
@@ -70,7 +70,7 @@ func TestAccRancher2Namespace_basic(t *testing.T) {
 	var ns *clusterClient.Namespace
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2NamespaceDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -108,7 +108,7 @@ func TestAccRancher2Namespace_disappears(t *testing.T) {
 	var ns *clusterClient.Namespace
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2NamespaceDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -160,7 +160,7 @@ func testAccRancher2NamespaceDisappears(ns *clusterClient.Namespace) resource.Te
 				MinTimeout: 3 * time.Second,
 			}
 
-			_, waitErr := stateConf.WaitForState()
+			_, waitErr := stateConf.WaitForStateContext(ctx)
 			if waitErr != nil {
 				return fmt.Errorf(
 					"[ERROR] waiting for namespace (%s) to be removed: %s", ns.ID, waitErr)

@@ -205,7 +205,7 @@ func (c *Config) IsRancherVersionGreaterThanOrEqualAndLessThan(ver1, ver2 string
 	if err != nil {
 		return false, err
 	}
-	return (greaterOrEqualThan && lessThan), nil
+	return greaterOrEqualThan && lessThan, nil
 }
 
 func (c *Config) IsRancherVersionLessThan(ver string) (bool, error) {
@@ -1140,7 +1140,7 @@ func (c *Config) SetUserPasswordByName(username, pass string) (bool, string, *ma
 		return false, "", nil, fmt.Errorf("[ERROR] Setting user password: Username is nil")
 	}
 
-	// Generating rancdom password if nil
+	// Generating random password if nil
 	if len(pass) == 0 {
 		pass = GetRandomPass(passDefaultLen)
 	}

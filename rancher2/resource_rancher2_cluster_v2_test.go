@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const testAccRancher2ClusterV2Type = "rancher2_cluster_v2"
@@ -75,7 +75,7 @@ func TestAccRancher2ClusterV2_basic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2ClusterV2Destroy,
 		Steps: []resource.TestStep{
 			{
@@ -120,7 +120,7 @@ func TestAccRancher2ClusterV2_disappears(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		ProviderFactories:    testAccProviders,
 		CheckDestroy: testAccCheckRancher2ClusterV2Destroy,
 		Steps: []resource.TestStep{
 			{
@@ -150,7 +150,7 @@ func testAccRancher2ClusterV2Disappears(cat *ClusterV2) resource.TestCheckFunc {
 			}
 			err = deleteClusterV2(testAccProvider.Meta().(*Config), cluster)
 			if err != nil {
-				return fmt.Errorf("testAccRancher2ClusterV2Disappears-delete: %v", err)
+				return fmt.Errorf("testAccRancher2ClusterV2Disappears-DeleteContext: %v", err)
 			}
 			stateConf := &resource.StateChangeConf{
 				Pending:    []string{},
@@ -160,7 +160,7 @@ func testAccRancher2ClusterV2Disappears(cat *ClusterV2) resource.TestCheckFunc {
 				Delay:      1 * time.Second,
 				MinTimeout: 3 * time.Second,
 			}
-			_, waitErr := stateConf.WaitForState()
+			_, waitErr := stateConf.WaitForStateContext(ctx)
 			if waitErr != nil {
 				return fmt.Errorf("[ERROR] waiting for cluster (%s) to be deleted: %s", cluster.ID, waitErr)
 			}

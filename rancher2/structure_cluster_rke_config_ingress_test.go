@@ -48,7 +48,7 @@ func init() {
 		},
 	}
 	testClusterRKEConfigIngresstDaemonSetStrategyConf = &managementClient.DaemonSetUpdateStrategy{
-		RollingUpdate: testClusterRKEConfigIngressUpdateDaemonSetConf,
+		RollingUpdateContext: testClusterRKEConfigIngressUpdateDaemonSetConf,
 		Strategy:      "strategy",
 	}
 	testClusterRKEConfigIngressDaemonSetStrategyInterface = []interface{}{
